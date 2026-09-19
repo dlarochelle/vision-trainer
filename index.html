@@ -297,7 +297,10 @@
 
     <h2 style="margin-top:22px">Runs this session</h2>
     <table class="runs" id="runs">
-      <tr><th>Source</th><th>Passage</th><th>wpm</th><th>Comprehension</th></tr>
+      <thead>
+        <tr><th scope="col">Source</th><th scope="col">Passage</th><th scope="col">wpm</th><th scope="col">Comprehension</th></tr>
+      </thead>
+      <tbody id="runsBody"></tbody>
     </table>
     <p class="note" style="margin-top:12px">
       This score is independent of the contrast-detection score in the other mode.
@@ -1294,6 +1297,10 @@ populatePassages(0);
 // progress is stopped first, so the presenter can skim the feed quickly.
 function nextPost() {
   if (!feedMode()) return;
+  // A response wait means a comprehension question is on screen. Advancing
+  // now would discard a partially scored run, so the button and the hotkey
+  // both refuse until the question is answered or the run is stopped.
+  if (keyResolver) return;
   const n = FEED_ALL.length;
   const i = (parseInt(el("passage").value, 10) + 1) % n;
   if (rsvp.running) stopRsvp(true);
@@ -1362,7 +1369,7 @@ async function runRsvp() {
   const tr = document.createElement("tr");
   const cells = [sourceLabel, title, String(wpm), `${Math.round(acc * 100)}% (${correct}/${passage.questions.length})`];
   cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
-  el("runs").appendChild(tr);
+  el("runsBody").appendChild(tr);
   el("rsvpWord").textContent = "Done";
   stopRsvp(false);
 }
