@@ -594,8 +594,16 @@ function drawIdle() {
   drawFrame(geo, { showTarget: true, targetContrast: 0.25, phaseDeg: 0, cue: "Preview: target 0.25 contrast" });
 }
 
+// Drop focus from whatever control was last clicked or dragged, so response
+// keys reach the document instead of a slider (Safari and Firefox on macOS do
+// not move focus to a button on click).
+function blurControls() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+
 async function runSweep() {
   const my = ++runId;
+  blurControls();
   sweep.running = true; sweep.results = {};
   el("start").disabled = true; el("abort").disabled = false;
   el("lvLast").textContent = "—";
@@ -621,10 +629,12 @@ async function runSweep() {
       if (runId !== my) return;
       drawFrame(geo, { showTarget: targetInterval === 1, targetContrast: contrast, phaseDeg, cue: "1" });
       await sleep(INTERVAL_MS);
+      if (runId !== my) return;
       drawBlank("");                                        await sleep(ISI_MS);
       if (runId !== my) return;
       drawFrame(geo, { showTarget: targetInterval === 2, targetContrast: contrast, phaseDeg, cue: "2" });
       await sleep(INTERVAL_MS);
+      if (runId !== my) return;
       drawBlank("Which interval?  1 (F)  or  2 (J)");
 
       const resp = await waitKey(INTERVAL_KEYS);
@@ -789,6 +799,7 @@ updateWpm();
 
 async function runRsvp() {
   const my = ++rsvp.runId;
+  blurControls();
   const passage = PASSAGES[parseInt(el("passage").value, 10)];
   const wpm = parseInt(el("wpm").value, 10);
   const words = passage.text.split(/\s+/);
