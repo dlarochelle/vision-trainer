@@ -3,41 +3,54 @@
 Single-page perceptual-learning trainer. Built for San Francisco Claude
 Build Day, 2026-09-19.
 
-## What to build
+## What was built
 
-Two modes on one page, each with **its own score**. They are not a
+One page, two modes, each with **its own score**. They are not a
 shared axis; see `docs/EVIDENCE.md` for why that idea was dropped.
 
-1. **Gabor-patch contrast staircase.** Sinusoidal grating under a
-   Gaussian envelope, drawn on a 2D canvas. Two-alternative forced
-   choice orientation discrimination. Adaptive staircase. Reports a
-   contrast threshold.
-2. **RSVP text mode.** Rapid serial visual presentation, text stimulus
-   instead of gratings. Reports words per minute. A separate number
-   from the Gabor threshold, displayed separately.
+1. **Gabor contrast detection with lateral masking.** A central
+   low-contrast Gabor (sinusoidal grating under a Gaussian envelope,
+   drawn per pixel on canvas) between two collinear high-contrast
+   flankers (0.6 Michelson, 3 carrier wavelengths away). Two-interval
+   forced choice: the flankers appear in both cued intervals, the
+   target in exactly one, and the observer picks which. Spatial phase
+   is fixed within a trial. Target contrast follows a 2-down-1-up
+   staircase. Spatial frequency is swept across blocks at 3, 6 and
+   12 c/deg, and the three thresholds are plotted as a contrast
+   sensitivity function. That curve is the mode's score.
+2. **RSVP reading.** Words one at a time at a fixed point, adjustable
+   words per minute. After each passage, four true/false comprehension
+   questions. The score is wpm paired with comprehension accuracy,
+   displayed together and never as speed alone.
 
-Starting parameters, standard psychophysics defaults, defensible but
-not pulled from a specific protocol:
+Parameters, all named constants at the top of the script:
 
-- 2-down-1-up staircase converging on about 71 percent correct. The
-  literature specifies no canonical staircase for this paradigm, so
-  this is a reasonable default rather than a protocol citation.
-- Spatial frequency swept across roughly 3 to 12 cycles per degree
-  rather than fixed. The published protocols sweep, and sweeping is
-  the one lever with any evidence of buying partial generalization.
-- 2AFC orientation discrimination. Note that the strongest evidence
-  lineage behind the cited papers used near-threshold contrast
-  *detection* with collinear high-contrast flankers, not orientation.
-  See `docs/EVIDENCE.md`.
-- RSVP default 300 wpm. Comprehension holds to roughly 350 wpm and
-  declines past 400, so the default sits inside the defensible band.
-  Users may push higher; the UI must not treat a high number as an
-  achievement.
+- Interval 150 ms, inter-stimulus interval 500 ms (Polat 2004 used
+  80-320 ms intervals and a 500 ms blank).
+- 2-down-1-up staircase converging on 70.7% correct. The rule is
+  paradigm-dependent, not canonical: external-noise work (Dosher & Lu
+  1999) uses 3-down-1-up (79.3%); the clinical training protocols use
+  2-down-1-up because the easier task limits fatigue.
+- Fixed 3 / 6 / 12 c/deg sweep. This is a stated deviation from the
+  published training protocols, which do not sweep fixed frequencies
+  (Polat starts low and advances adaptively; Zhou 2006 trains at the
+  individual's cutoff). The app measures a CSF; it does not replicate
+  a training protocol, and the UI says so.
+- Viewing distance is a visible setting defaulting to 60 cm, with the
+  derived px/degree shown (assumes 96 CSS px/inch). A separate display
+  scale multiplier magnifies the drawn stimulus for projectors; the
+  px/degree readout keeps the true unscaled value so magnification is
+  never disguised as angular size.
+- RSVP default 250 wpm, warning above 350 (Di Nocera 2018, n=209).
+  The UI states that this measures comprehension under RSVP and does
+  not measure, and is not known to improve, natural reading (Rayner
+  et al. 2016).
 
 The score is a threshold measurement, not a progress meter. Published
-protocols need 20 to 45 sessions over 2 to 3 months before a
-measurable effect, so any improvement curve drawn inside a single
-session is a practice effect. Do not build one.
+protocols run 900-1,000 trials per session over 30-40 sessions before
+a measurable effect; a demo block is a few dozen trials, and the UI
+says so. Any improvement curve drawn inside a single session would be
+a practice effect. There is none.
 
 ## Hard rules
 
