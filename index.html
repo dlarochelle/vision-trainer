@@ -233,6 +233,7 @@
       word in peripheral vision, which natural reading depends on).
     </div>
 
+    <p class="note center hidden" id="feedMeta"></p>
     <div class="rsvp-field" id="rsvpField">
       <div class="rsvp-word" id="rsvpWord">Press Start</div>
     </div>
@@ -259,9 +260,25 @@
   <aside>
     <h2>Run</h2>
     <div class="ctl">
-      <label for="passage"><span>Passage</span><span></span></label>
+      <label for="source"><span>Passage source</span><span></span></label>
+      <select id="source">
+        <option value="builtin">Built-in passages (Aesop, with questions)</option>
+        <option value="feed">Instagram feed (cached 2026-09-19)</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label for="passage"><span id="passageLabel">Passage</span><span id="passageCount"></span></label>
       <select id="passage"></select>
     </div>
+    <div class="row hidden" id="feedRow" style="margin-bottom:14px">
+      <button class="btn secondary" id="nextPost">Next post &nbsp;<kbd>N</kbd>/<kbd>&rarr;</kbd></button>
+    </div>
+    <p class="note hidden" id="feedNote" style="margin:-6px 0 14px">
+      Posts from a real home feed, captured once on 2026-09-19 and embedded in this
+      file; nothing is fetched now. Each post has four true/false questions, so feed
+      runs are scored the same way as the built-in passages. <kbd>N</kbd> or
+      <kbd>&rarr;</kbd> jumps to the next post whenever a question is not on screen.
+    </p>
     <div class="ctl">
       <label for="wpm"><span>Words per minute</span><span id="wpmV">250</span></label>
       <input type="range" id="wpm" min="100" max="700" step="10" value="250">
@@ -280,7 +297,7 @@
 
     <h2 style="margin-top:22px">Runs this session</h2>
     <table class="runs" id="runs">
-      <tr><th>Passage</th><th>wpm</th><th>Comprehension</th></tr>
+      <tr><th>Source</th><th>Passage</th><th>wpm</th><th>Comprehension</th></tr>
     </table>
     <p class="note" style="margin-top:12px">
       This score is independent of the contrast-detection score in the other mode.
@@ -566,7 +583,14 @@ function waitKey(map) {
 }
 document.addEventListener("keydown", (e) => {
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
-  if (keyResolver && keyResolver(e.key)) e.preventDefault();
+  if (keyResolver) { if (keyResolver(e.key)) e.preventDefault(); return; }
+  // No response wait is active. In RSVP mode with the feed source, N and the
+  // right arrow skip to the next post; preventDefault only when consumed.
+  if ((e.key === "n" || e.key === "N" || e.key === "ArrowRight") && !e.metaKey && !e.ctrlKey && !e.altKey
+      && !el("modeRsvp").classList.contains("hidden") && feedMode()) {
+    e.preventDefault();
+    nextPost();
+  }
 });
 const INTERVAL_KEYS = { f: 1, F: 1, ArrowLeft: 1, j: 2, J: 2, ArrowRight: 2 };
 
@@ -1039,10 +1063,57 @@ const FEED_POSTS = [
 const rsvp = { running: false, runId: 0 };
 const TF_KEYS = { f: true, F: true, ArrowLeft: true, j: false, J: false, ArrowRight: false };
 
-PASSAGES.forEach((p, i) => {
-  const o = document.createElement("option"); o.value = i; o.textContent = `${p.title} (${p.text.split(/\s+/).length} words)`;
-  el("passage").appendChild(o);
-});
+// Passage source. Built-in passages and cached feed posts share the same
+// shape (text + four true/false questions) so one run loop serves both, but
+// results always name the source so the two sets are never read as one list.
+function feedMode() { return el("source").value === "feed"; }
+function currentList() { return feedMode() ? FEED_POSTS : PASSAGES; }
+function passageTitle(p) { return p.title || "@" + p.author; }
+
+function populatePassages(keepIndex = 0) {
+  const sel = el("passage");
+  sel.innerHTML = "";
+  const list = currentList();
+  list.forEach((p, i) => {
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = `${passageTitle(p)} (${p.text.split(/\s+/).length} words)`;
+    sel.appendChild(o);
+  });
+  sel.value = String(Math.min(keepIndex, list.length - 1));
+  const feed = feedMode();
+  el("passageLabel").textContent = feed ? "Post" : "Passage";
+  el("passageCount").textContent = feed ? `${list.length} cached` : "";
+  el("feedRow").classList.toggle("hidden", !feed);
+  el("feedNote").classList.toggle("hidden", !feed);
+  updateFeedMeta();
+}
+
+function updateFeedMeta() {
+  const meta = el("feedMeta");
+  if (!feedMode()) { meta.classList.add("hidden"); meta.textContent = ""; return; }
+  const i = parseInt(el("passage").value, 10);
+  const p = FEED_POSTS[i];
+  meta.textContent = `@${p.author} \u00b7 post ${i + 1} / ${FEED_POSTS.length} \u00b7 cached ${FEED_CAPTURE_DATE}`;
+  meta.classList.remove("hidden");
+}
+
+el("source").addEventListener("change", () => { if (rsvp.running) stopRsvp(true); populatePassages(0); });
+el("passage").addEventListener("change", updateFeedMeta);
+populatePassages(0);
+
+// Advance to the next feed post and start it. Wraps at the end. Any run in
+// progress is stopped first, so the presenter can skim the feed quickly.
+function nextPost() {
+  if (!feedMode()) return;
+  const n = FEED_POSTS.length;
+  const i = (parseInt(el("passage").value, 10) + 1) % n;
+  if (rsvp.running) stopRsvp(true);
+  el("passage").value = String(i);
+  updateFeedMeta();
+  runRsvp();
+}
+el("nextPost").addEventListener("click", nextPost);
 
 function updateWpm() {
   const w = parseInt(el("wpm").value, 10);
@@ -1056,7 +1127,11 @@ updateWpm();
 async function runRsvp() {
   const my = ++rsvp.runId;
   blurControls();
-  const passage = PASSAGES[parseInt(el("passage").value, 10)];
+  const feed = feedMode();
+  const passage = currentList()[parseInt(el("passage").value, 10)];
+  const title = passageTitle(passage);
+  const sourceLabel = feed ? "Instagram feed" : "Built-in";
+  updateFeedMeta();
   const wpm = parseInt(el("wpm").value, 10);
   const words = passage.text.split(/\s+/);
   const msPerWord = 60000 / wpm;
@@ -1093,11 +1168,12 @@ async function runRsvp() {
   const acc = correct / passage.questions.length;
   el("resWpm").textContent = String(wpm);
   el("resAcc").textContent = Math.round(acc * 100) + "%";
-  el("resNote").textContent = `${correct} of ${passage.questions.length} correct on "${passage.title}". ` +
+  el("resNote").textContent = `${correct} of ${passage.questions.length} correct on ${feed ? "feed post by " : ""}${title} (${sourceLabel}). ` +
     (wpm > RSVP_WARN_WPM ? "Above the ~350 wpm band where comprehension holds under RSVP." : "");
   el("resultBox").classList.remove("hidden");
   const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${passage.title}</td><td>${wpm}</td><td>${Math.round(acc * 100)}% (${correct}/${passage.questions.length})</td>`;
+  const cells = [sourceLabel, title, String(wpm), `${Math.round(acc * 100)}% (${correct}/${passage.questions.length})`];
+  cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
   el("runs").appendChild(tr);
   el("rsvpWord").textContent = "Done";
   stopRsvp(false);
