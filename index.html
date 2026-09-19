@@ -261,6 +261,10 @@
     <div class="ctl">
       <label for="passage"><span>Passage</span><span></span></label>
       <select id="passage"></select>
+      <p class="note hidden" id="feedNote" style="margin:6px 0 0">
+        Feed passages are a snapshot fetched at build time from public posts;
+        the demo makes no network calls.
+      </p>
     </div>
     <div class="ctl">
       <label for="wpm"><span>Words per minute</span><span id="wpmV">250</span></label>
@@ -804,13 +808,30 @@ const PASSAGES = [
   }
 ];
 
+/* Build-time snapshot of public Instagram captions, written by
+   tools/inline_feed.mjs. Empty by default: the demo ships and runs without it,
+   and nothing here is fetched at runtime. Do not edit by hand. */
+/* FEED_PASSAGES_START */
+const FEED_PASSAGES = [];
+/* FEED_PASSAGES_END */
+
+// Built-in passages first, so existing option indices are unchanged.
+const ALL_PASSAGES = PASSAGES.concat(FEED_PASSAGES);
+
 const rsvp = { running: false, runId: 0 };
 const TF_KEYS = { f: true, F: true, ArrowLeft: true, j: false, J: false, ArrowRight: false };
 
-PASSAGES.forEach((p, i) => {
+function passageOption(p, i) {
   const o = document.createElement("option"); o.value = i; o.textContent = `${p.title} (${p.text.split(/\s+/).length} words)`;
-  el("passage").appendChild(o);
-});
+  return o;
+}
+PASSAGES.forEach((p, i) => { el("passage").appendChild(passageOption(p, i)); });
+if (FEED_PASSAGES.length) {
+  const g = document.createElement("optgroup"); g.label = "My feed (snapshot, offline)";
+  FEED_PASSAGES.forEach((p, i) => { g.appendChild(passageOption(p, PASSAGES.length + i)); });
+  el("passage").appendChild(g);
+  el("feedNote").classList.remove("hidden");
+}
 
 function updateWpm() {
   const w = parseInt(el("wpm").value, 10);
@@ -824,7 +845,7 @@ updateWpm();
 async function runRsvp() {
   const my = ++rsvp.runId;
   blurControls();
-  const passage = PASSAGES[parseInt(el("passage").value, 10)];
+  const passage = ALL_PASSAGES[parseInt(el("passage").value, 10)];
   const wpm = parseInt(el("wpm").value, 10);
   const words = passage.text.split(/\s+/);
   const msPerWord = 60000 / wpm;
