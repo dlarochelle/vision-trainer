@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision Trainer</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #15151a;
+    --line: #2a2a33;
+    --ink: #e8e8ee;
+    --dim: #9a9aa8;
+    --accent: #6ea8ff;
+    --warn: #ffb454;
+    /* Mid-gray matching the canvas background, so the stimulus field
+       does not sit in a bright surround. */
+    --field: #808080;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.5;
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  header {
+    display: flex; align-items: baseline; gap: 24px;
+    padding: 14px 28px; border-bottom: 1px solid var(--line);
+  }
+  h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: .01em; }
+  .modes { display: flex; gap: 8px; margin-left: auto; }
+  .modes button {
+    background: var(--panel); color: var(--dim);
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px 16px; font-size: 16px; font-family: inherit; cursor: pointer;
+  }
+  .modes button[aria-selected="true"] { color: var(--ink); border-color: var(--accent); }
+  main { flex: 1; display: flex; gap: 28px; padding: 24px 28px; align-items: flex-start; }
+  .stage {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  canvas {
+    background: var(--field);
+    border-radius: 4px;
+    image-rendering: pixelated;
+  }
+  aside {
+    width: 330px; flex: none;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px;
+  }
+  aside h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--dim); margin: 0 0 14px; font-weight: 600;
+  }
+  .ctl { margin-bottom: 15px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 5px; }
+  .ctl label span:last-child { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+  .ctl input[type=number] {
+    width: 90px; background: #0e0e12; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px;
+    font-family: inherit; font-size: 15px;
+  }
+  .derived {
+    border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px;
+    font-size: 14px; color: var(--dim);
+  }
+  .derived div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .derived b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  footer {
+    border-top: 1px solid var(--line); padding: 12px 28px;
+    font-size: 13px; color: var(--dim); line-height: 1.45;
+  }
+  .note { font-size: 13px; color: var(--dim); max-width: 60ch; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Vision Trainer</h1>
+  <div class="modes" role="tablist">
+    <button role="tab" aria-selected="true">Contrast (Gabor)</button>
+    <button role="tab" aria-selected="false" disabled>RSVP reading</button>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <canvas id="stim" width="640" height="640"></canvas>
+    <p class="note" id="note">
+      Step 1: static Gabor patch. Sinusoidal carrier under a Gaussian envelope,
+      computed per pixel. Adjust below to verify it behaves correctly.
+    </p>
+  </div>
+
+  <aside>
+    <h2>Stimulus</h2>
+
+    <div class="ctl">
+      <label for="cpd"><span>Spatial frequency</span><span id="cpdV">6.0 c/deg</span></label>
+      <input type="range" id="cpd" min="1" max="16" step="0.5" value="6">
+    </div>
+
+    <div class="ctl">
+      <label for="con"><span>Michelson contrast</span><span id="conV">0.40</span></label>
+      <input type="range" id="con" min="0" max="1" step="0.01" value="0.4">
+    </div>
+
+    <div class="ctl">
+      <label for="ori"><span>Orientation</span><span id="oriV">0&deg;</span></label>
+      <input type="range" id="ori" min="0" max="180" step="1" value="0">
+    </div>
+
+    <div class="ctl">
+      <label for="pha"><span>Phase</span><span id="phaV">0&deg;</span></label>
+      <input type="range" id="pha" min="0" max="360" step="1" value="0">
+    </div>
+
+    <h2 style="margin-top:22px">Viewing geometry</h2>
+    <div class="ctl">
+      <label for="dist"><span>Viewing distance</span><span></span></label>
+      <input type="number" id="dist" min="20" max="300" step="1" value="60"> cm
+    </div>
+
+    <div class="derived">
+      <div><span>Pixels per degree</span><b id="ppd">&mdash;</b></div>
+      <div><span>Carrier wavelength</span><b id="lam">&mdash;</b></div>
+      <div><span>Envelope &sigma;</span><b id="sig">&mdash;</b></div>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin:12px 0 0">
+      Degrees are derived from an assumed 96&nbsp;CSS&nbsp;px/inch display.
+      On a different display the true angular size differs; the assumption is
+      shown rather than hidden.
+    </p>
+  </aside>
+</main>
+
+<footer>
+  Experimental. Not a medical device, not a substitute for eye care, and not
+  validated to improve reading comprehension or treat any condition. Evidence
+  for this paradigm comes from clinical populations (amblyopia, nystagmus,
+  keratoconus), not healthy adults.
+</footer>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------------------
+   Constants
+--------------------------------------------------------------------------- */
+
+// CSS defines 1in = 96px. Every degree-to-pixel conversion rests on this, and
+// it is only true on a display at nominal CSS pixel density.
+const CSS_PX_PER_INCH = 96;
+const CM_PER_INCH = 2.54;
+
+// Gaussian envelope size, in carrier wavelengths. sigma = 1 lambda keeps the
+// patch to roughly 2-3 visible cycles, as in the Polat lateral-masking work.
+const SIGMA_LAMBDA = 1.0;
+
+// Envelope is truncated where it is no longer visible, at 3 sigma.
+const ENVELOPE_CUTOFF_SIGMA = 3.0;
+
+const MEAN_LUMA = 128; // mid-gray, 8-bit
+
+/* ---------------------------------------------------------------------------
+   Viewing geometry
+--------------------------------------------------------------------------- */
+
+// Pixels subtended by one degree of visual angle at a given viewing distance.
+function pxPerDegree(distanceCm) {
+  const pxPerCm = CSS_PX_PER_INCH / CM_PER_INCH;
+  const distancePx = distanceCm * pxPerCm;
+  return distancePx * Math.tan(Math.PI / 180);
+}
+
+/* ---------------------------------------------------------------------------
+   Gabor rendering
+
+   L(x,y) = MEAN * (1 + C * sin(2*pi*x'/lambda + phase) * exp(-r^2/(2*sigma^2)))
+
+   where x' is the coordinate along the carrier axis after rotating by the
+   patch orientation.
+
+   Caveat: contrast here is Michelson contrast in 8-bit pixel-value units, not
+   in linearized display luminance. Without per-display gamma calibration the
+   two differ. Thresholds are therefore comparable within one session on one
+   display, and not across displays.
+--------------------------------------------------------------------------- */
+
+function drawGabor(ctx, opts) {
+  const { cx, cy, lambda, sigma, contrast, orientationDeg, phaseDeg } = opts;
+
+  const radius = Math.ceil(sigma * ENVELOPE_CUTOFF_SIGMA);
+  const size = radius * 2 + 1;
+
+  const x0 = Math.round(cx) - radius;
+  const y0 = Math.round(cy) - radius;
+
+  const img = ctx.createImageData(size, size);
+  const data = img.data;
+
+  const theta = orientationDeg * Math.PI / 180;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const phase = phaseDeg * Math.PI / 180;
+
+  const k = 2 * Math.PI / lambda;       // carrier angular frequency
+  const denom = 2 * sigma * sigma;
+  const amplitude = contrast * (MEAN_LUMA - 0.5); // keeps C=1 inside 0..255
+
+  for (let j = 0; j < size; j++) {
+    const dy = j - radius;
+    for (let i = 0; i < size; i++) {
+      const dx = i - radius;
+
+      const xr = dx * cosT + dy * sinT;          // along carrier axis
+      const envelope = Math.exp(-(dx * dx + dy * dy) / denom);
+      const carrier = Math.sin(k * xr + phase);
+
+      const v = MEAN_LUMA + amplitude * carrier * envelope;
+      const b = v < 0 ? 0 : v > 255 ? 255 : v;
+
+      const p = (j * size + i) * 4;
+      data[p] = b; data[p + 1] = b; data[p + 2] = b;
+      // Alpha follows the envelope so the patch composites onto the mid-gray
+      // field with no visible square edge.
+      data[p + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(img, x0, y0);
+}
+
+function clearField(ctx, canvas) {
+  ctx.fillStyle = "rgb(128,128,128)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+/* ---------------------------------------------------------------------------
+   Step 1 preview wiring
+--------------------------------------------------------------------------- */
+
+const canvas = document.getElementById("stim");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+const el = (id) => document.getElementById(id);
+const inputs = ["cpd", "con", "ori", "pha", "dist"].map(el);
+
+function render() {
+  const cpd = parseFloat(el("cpd").value);
+  const contrast = parseFloat(el("con").value);
+  const orientation = parseFloat(el("ori").value);
+  const phaseDeg = parseFloat(el("pha").value);
+  const distanceCm = parseFloat(el("dist").value) || 60;
+
+  const ppd = pxPerDegree(distanceCm);
+  const lambda = ppd / cpd;              // px per cycle
+  const sigma = lambda * SIGMA_LAMBDA;
+
+  el("cpdV").textContent = cpd.toFixed(1) + " c/deg";
+  el("conV").textContent = contrast.toFixed(2);
+  el("oriV").textContent = orientation.toFixed(0) + "°";
+  el("phaV").textContent = phaseDeg.toFixed(0) + "°";
+  el("ppd").textContent = ppd.toFixed(1) + " px";
+  el("lam").textContent = lambda.toFixed(1) + " px";
+  el("sig").textContent = sigma.toFixed(1) + " px";
+
+  clearField(ctx, canvas);
+  drawGabor(ctx, {
+    cx: canvas.width / 2,
+    cy: canvas.height / 2,
+    lambda, sigma, contrast,
+    orientationDeg: orientation,
+    phaseDeg
+  });
+}
+
+inputs.forEach((i) => i.addEventListener("input", render));
+render();
+</script>
+</body>
+</html>

@@ -2,23 +2,18 @@
 
 Balances and claim state are not recorded here. Check each console.
 
-## Anthropic, $100 USD
+## Anthropic, $100 USD - NOT AVAILABLE
 
-Two options were offered, and they are alternatives rather than a
-stack: an existing Claude subscription, or the API credits. Running
-Claude Code on a subscription needs no claim, so claiming is not a
-prerequisite to building.
+Resolved on event day, 2026-09-19: the credits did not come through.
+The build runs on a personal Claude subscription instead. No API key,
+no Organization on `platform.claude.com`, nothing to claim.
 
-Claiming: `platform.claude.com/offers`, sign in, claim the offer,
-generate the key. Prerequisite named on the event page: an
-Organization created on `platform.claude.com`.
-
-Where the credits actually go: this trainer is an offline HTML file
-that makes no API call at runtime, so the credits fund the Claude Code
-session that builds it, not the demo. **Open decision:** if the
-credits should be visible in the demo itself, RSVP passage generation
-or difficulty grading is the place to spend them. That is a scope
-change, not a default, and it breaks the zero-network-call rule.
+This costs the build nothing. The trainer is an offline HTML file that
+makes no API call at runtime, so the credits would only ever have
+funded the Claude Code session, not the demo. The prior open decision
+about spending them on RSVP passage generation or difficulty grading
+is closed by default: passages ship inline as string constants, and
+the zero-network-call rule holds.
 
 Model the organizers named: Fable 5.1.
 
@@ -48,9 +43,10 @@ Three products: Sandboxes, Runners, Code Reviewer.
   `curl -fsSL https://tenki.cloud/install.sh | bash` or
   `pip install tenki`. A static page executes nothing untrusted, so
   this has no role unless the build grows one.
-- Unknown: the hackathon allowance. Their welcome mail says first runs
-  are on us and names no figure; their docs say jobs are balance-gated.
-  Read the balance before depending on it.
+- Hackathon allowance: **$200**, confirmed by Tenki on event day.
+  More is available on request - asked, awaiting an answer. Jobs are
+  balance-gated per their docs, so read the balance before depending
+  on it.
 
 ## AIsa (aisa.one)
 
