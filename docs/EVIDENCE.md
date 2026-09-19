@@ -124,7 +124,7 @@ are traceable:
   training protocol. The UI states this deviation.
 - **Staircase.** The choice is paradigm-dependent, not canonical.
   3-down-1-up converges on 79.3% and is used in external-noise work
-  (Dosher & Lu 1999); 2-down-1-up converges on 70.7% (d' = 1.09) and
+  (Dosher & Lu 1999); 2-down-1-up converges on 70.7% (d' ~= 0.77 in a two-interval task) and
   is used in the clinical training protocols, where the easier task
   limits frustration and fatigue. The build uses 2-down-1-up, with the
   rule and the caveat as named constants and a code comment.

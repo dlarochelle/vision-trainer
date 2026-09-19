@@ -332,7 +332,9 @@ const ISI_MS = 500;
 const PRE_TRIAL_MS = 500;   // "get ready" blank before interval 1
 const FEEDBACK_MS = 400;    // correct/incorrect flash after the response
 
-// Staircase rule. 2-down-1-up converges on 70.7% correct (d' = 1.09).
+// Staircase rule. 2-down-1-up converges on 70.7% correct. In a two-interval
+// forced-choice task that is d' = sqrt(2) * z(0.707) ~= 0.77 (the often-quoted
+// 1.09 is the yes/no conversion and does not apply here).
 // The choice is paradigm-dependent, not canonical. External-noise paradigms
 // (Dosher & Lu 1999) use 3-down-1-up, converging on 79.3%. 2-down-1-up is
 // the rule used in amblyopia training protocols, where the easier task
@@ -781,7 +783,7 @@ const PASSAGES = [
   }
 ];
 
-const rsvp = { running: false, runId: 0, words: [], index: 0 };
+const rsvp = { running: false, runId: 0 };
 const TF_KEYS = { f: true, F: true, ArrowLeft: true, j: false, J: false, ArrowRight: false };
 
 PASSAGES.forEach((p, i) => {
@@ -794,6 +796,7 @@ function updateWpm() {
   el("wpmV").textContent = String(w);
   el("wpmWarn").classList.toggle("hidden", w <= RSVP_WARN_WPM);
 }
+el("wpm").value = RSVP_DEFAULT_WPM;
 el("wpm").addEventListener("input", updateWpm);
 updateWpm();
 
