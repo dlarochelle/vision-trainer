@@ -1,7 +1,10 @@
 # Vision Trainer
 
-Single-page perceptual-learning trainer. Built for San Francisco Claude
-Build Day, 2026-09-19.
+Single-page perceptual-learning trainer for people who want to see
+better and read faster. Built for San Francisco Claude Build Day,
+2026-09-19. Those two outcomes are the goals the project is testing
+toward, not results it has shown; more testing is needed, and the
+evidence so far comes from clinical populations, not healthy adults.
 
 ## What was built
 
@@ -21,7 +24,11 @@ shared axis; see `docs/EVIDENCE.md` for why that idea was dropped.
 2. **RSVP reading.** Words one at a time at a fixed point, adjustable
    words per minute. After each passage, four true/false comprehension
    questions. The score is wpm paired with comprehension accuracy,
-   displayed together and never as speed alone.
+   displayed together and never as speed alone. Two passage sources:
+   four built-in Aesop retellings, and 20 posts from David's Instagram
+   home feed captured once on 2026-09-19 and embedded in the file with
+   their own questions. Nothing is fetched at runtime. A Next-post
+   button and the N / right-arrow hotkey step through the feed.
 
 Parameters, all named constants at the top of the script:
 
@@ -59,8 +66,13 @@ a practice effect. There is none.
 
 - One HTML file. No build step, no bundler.
 - Runs offline. Zero network calls in the demo path.
-- Makes no therapeutic claim. The papers are the design source for the
-  stimuli, not a health claim about this artifact.
+- States goals, not results. The aim is a tool that helps people see
+  better and read faster; that aim is under active testing and more
+  testing is needed. Current evidence comes from clinical populations,
+  not healthy adults. The papers are the design source for the stimuli,
+  not a demonstrated outcome of this artifact. The footer disclaimer
+  stays verbatim and always visible. See the Claims section of
+  `AGENTS.md` for the banned words and the naming rules.
 
 ## Event constraints
 
@@ -78,9 +90,9 @@ Only after the 2D trainer runs end to end.
 1. **WebXR.** A `VRButton` on the same page, inert without a device.
    Do not port the stimulus to three.js for this; see
    `docs/EVIDENCE.md` for why the 2D canvas is the better substrate.
-2. **Social feed as RSVP source.** Apify Instagram and Facebook
-   scrapers. Gated behind the no-network-call rule: the trainer must
-   demo without it.
+2. **Social feed as RSVP source.** Done for Instagram as a one-time
+   cached capture (see above), which keeps the no-network-call rule.
+   A live scraper (Apify or similar) remains out of scope for the demo.
 
 ## Documents here
 

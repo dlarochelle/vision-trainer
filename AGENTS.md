@@ -16,12 +16,33 @@ comprehension scoring.
   CDN links. Vanilla JS and canvas only.
 - **Offline.** Zero network calls on the demo path. It must work
   opened from `file://`.
-- **No therapeutic claim.** See "Claims" below. This rule is not
-  subject to tradeoffs against scope, polish, or deadline.
+- **Goals, not results.** The pitch is a tool to see better and read
+  faster. Those are stated as goals under testing, never as results.
+  See "Claims" below. The footer disclaimer and the banned-word list
+  are not subject to tradeoffs against scope, polish, or deadline.
 
 ## Claims
 
-This footer text must be visible on screen at all times, verbatim:
+Framing, decided by David on 2026-09-19 after the tradeoffs were laid
+out three times: this is pitched as a tool for people who want to see
+better and read faster, not as a science experiment. Better vision and
+faster reading are the **aspirational goals** of the project. They are
+stated as goals under active testing, with a plain "more testing is
+needed" line, never as things the app has been shown to do.
+
+Say this, in these terms:
+
+- The goal is better vision and faster reading. We are testing whether
+  it works. More testing is needed.
+- The evidence behind the stimulus design comes from clinical
+  populations (amblyopia, nystagmus, keratoconus), not healthy adults.
+- The app measures a contrast sensitivity function and comprehension
+  under RSVP. Faster natural reading is the goal we are testing toward,
+  not a demonstrated result; Rayner et al. (2016) is cited on screen as
+  a non-transfer finding and stays there.
+
+This footer text must be visible on screen at all times, verbatim.
+David chose to keep it as is. Do not collapse, shorten, or hide it:
 
 > Experimental. Not a medical device, not a substitute for eye care,
 > and not validated to improve reading comprehension or treat any
@@ -32,14 +53,16 @@ This footer text must be visible on screen at all times, verbatim:
 pitch: treats, therapy, cures, rewires, permanently, mitigates,
 prevents, diagnoses, restores, corrects.
 
-Do not claim transfer to everyday vision or reading. Do not name a
-condition as something this app addresses — FDA classifies software as
-a medical device based on intended use as stated in its claims.
-Describing what the app *measures* is safe; describing what it *does
-to the user* is not.
+Do not name a condition as something this app addresses. FDA classifies
+software as a medical device based on intended use as stated in its
+claims, so a named condition changes the regulatory category. The
+footer names conditions only to say where the evidence comes from.
 
 Do not upgrade an observational study to an "RCT" in any document or
 in the pitch.
+
+Do not state transfer to everyday vision or natural reading as a fact.
+"The goal is to read faster" is allowed; "you will read faster" is not.
 
 ## Scoring
 
