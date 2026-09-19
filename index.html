@@ -555,12 +555,18 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let keyResolver = null;
 function waitKey(map) {
   return new Promise((resolve) => {
-    keyResolver = (key) => { if (key === null) { keyResolver = null; resolve(null); } else if (key in map) { keyResolver = null; resolve(map[key]); } };
+    // Returns true only when the key was consumed, so the keydown handler
+    // can leave Tab, Enter, Space and everything else to the browser.
+    keyResolver = (key) => {
+      if (key === null) { keyResolver = null; resolve(null); return true; }
+      if (key in map) { keyResolver = null; resolve(map[key]); return true; }
+      return false;
+    };
   });
 }
 document.addEventListener("keydown", (e) => {
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
-  if (keyResolver) { keyResolver(e.key); e.preventDefault(); }
+  if (keyResolver && keyResolver(e.key)) e.preventDefault();
 });
 const INTERVAL_KEYS = { f: 1, F: 1, ArrowLeft: 1, j: 2, J: 2, ArrowRight: 2 };
 
