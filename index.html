@@ -13,6 +13,8 @@
     --dim: #9a9aa8;
     --accent: #6ea8ff;
     --warn: #ffb454;
+    --good: #5fd18a;
+    --bad: #ff6b6b;
     /* Mid-gray matching the canvas background, so the stimulus field
        does not sit in a bright surround. */
     --field: #808080;
@@ -39,19 +41,21 @@
   .modes button[aria-selected="true"] { color: var(--ink); border-color: var(--accent); }
   main { flex: 1; display: flex; gap: 28px; padding: 24px 28px; align-items: flex-start; }
   .stage {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; min-width: 0;
   }
-  canvas {
+  canvas#stim {
     background: var(--field);
     border-radius: 4px;
     image-rendering: pixelated;
+    max-width: 100%; max-height: 72vh; width: auto; height: auto;
   }
+  canvas#csf { max-width: 100%; }
   aside {
-    width: 330px; flex: none;
+    width: 350px; flex: none;
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     padding: 18px 20px;
   }
-  aside h2 {
+  aside h2, .stage h2 {
     font-size: 13px; text-transform: uppercase; letter-spacing: .09em;
     color: var(--dim); margin: 0 0 14px; font-weight: 600;
   }
@@ -59,22 +63,71 @@
   .ctl label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 5px; }
   .ctl label span:last-child { color: var(--accent); font-variant-numeric: tabular-nums; }
   .ctl input[type=range] { width: 100%; accent-color: var(--accent); }
-  .ctl input[type=number] {
+  .ctl input[type=number], .ctl select {
     width: 90px; background: #0e0e12; color: var(--ink);
     border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px;
     font-family: inherit; font-size: 15px;
   }
+  .ctl select { width: 100%; }
   .derived {
     border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px;
     font-size: 14px; color: var(--dim);
   }
   .derived div { display: flex; justify-content: space-between; margin-bottom: 4px; }
   .derived b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-  footer {
-    border-top: 1px solid var(--line); padding: 12px 28px;
-    font-size: 13px; color: var(--dim); line-height: 1.45;
+  .live { margin-top: 16px; font-size: 15px; }
+  .live div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .live b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .live .big { font-size: 30px; font-weight: 700; color: var(--accent); }
+  .btn {
+    background: var(--accent); color: #06101f; border: 0; border-radius: 7px;
+    padding: 10px 18px; font-size: 17px; font-weight: 650; font-family: inherit; cursor: pointer;
   }
-  .note { font-size: 13px; color: var(--dim); max-width: 60ch; text-align: center; }
+  .btn.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  kbd {
+    display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 5px; font-family: ui-monospace, monospace; font-size: 14px; background: #0e0e12;
+  }
+  footer {
+    position: sticky; bottom: 0; z-index: 10; background: var(--bg);
+    border-top: 1px solid var(--line); padding: 12px 28px;
+    font-size: 14px; color: var(--ink); line-height: 1.45;
+  }
+  .note { font-size: 14px; color: var(--dim); max-width: 70ch; }
+  .note.center { text-align: center; }
+  .warn { color: var(--warn); }
+  .hidden { display: none !important; }
+  .framing {
+    border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px;
+    color: var(--ink); font-size: 15px; max-width: 78ch; background: #1a1610;
+  }
+  table.thr { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 8px; }
+  table.thr td { padding: 3px 0; border-bottom: 1px solid var(--line); }
+  table.thr td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+
+  /* RSVP */
+  .rsvp-field {
+    width: 100%; max-width: 900px; height: 240px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .rsvp-word {
+    font-size: 72px; font-weight: 600; letter-spacing: .01em; font-variant-ligatures: none;
+  }
+  .rsvp-field .mark {
+    position: absolute; left: 50%; width: 2px; background: var(--line);
+  }
+  .question { font-size: 26px; max-width: 70ch; text-align: center; }
+  .score { display: flex; gap: 40px; justify-content: center; margin-top: 6px; }
+  .score div { text-align: center; }
+  .score .v { font-size: 44px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .score .l { font-size: 14px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+  .runs { font-size: 15px; width: 100%; border-collapse: collapse; }
+  .runs td, .runs th { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+  .runs th { color: var(--dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+  .runs td:first-child, .runs th:first-child { text-align: left; }
 </style>
 </head>
 <body>
@@ -82,58 +135,157 @@
 <header>
   <h1>Vision Trainer</h1>
   <div class="modes" role="tablist">
-    <button role="tab" aria-selected="true">Contrast (Gabor)</button>
-    <button role="tab" aria-selected="false" disabled>RSVP reading</button>
+    <button role="tab" id="tabGabor" aria-selected="true">Contrast detection (Gabor)</button>
+    <button role="tab" id="tabRsvp" aria-selected="false">RSVP reading</button>
   </div>
 </header>
 
-<main>
+<!-- =============================== MODE 1 =============================== -->
+<main id="modeGabor">
   <div class="stage">
-    <canvas id="stim" width="640" height="640"></canvas>
-    <p class="note" id="note">
-      Step 1: static Gabor patch. Sinusoidal carrier under a Gaussian envelope,
-      computed per pixel. Adjust below to verify it behaves correctly.
+    <canvas id="stim" width="720" height="720"></canvas>
+    <p class="note center" id="note">
+      Two intervals, cued <b>1</b> and <b>2</b>. The flankers appear in both. The faint
+      central target appears in exactly one. Answer with
+      <kbd>F</kbd>/<kbd>&larr;</kbd> for interval 1, <kbd>J</kbd>/<kbd>&rarr;</kbd> for interval 2.
+      Stop if you get a headache, eye strain, or double vision.
+    </p>
+
+    <h2 style="margin-top:8px">Score: contrast sensitivity function</h2>
+    <canvas id="csf" width="720" height="300"></canvas>
+    <p class="note center">
+      Threshold contrast per spatial frequency, plotted as sensitivity (1/threshold).
+      Display scale magnifies the stimulus, which lowers the angular frequency the
+      observer sees to the nominal value divided by the scale; points are plotted at
+      that effective frequency, so a 3&nbsp;c/deg block at 4&times; plots at 0.75&nbsp;c/deg.
+      This is a demonstration of the paradigm at a small fraction of any studied
+      training dose: published protocols run roughly 900&ndash;1,000 trials per session
+      over 30&ndash;40 sessions; a block here is a few dozen trials.
+    </p>
+    <p class="note center">
+      Deviation from the published protocols, stated plainly: they do not sweep fixed
+      spatial frequencies (Polat starts low and advances adaptively; Zhou et al. train at
+      the individual's cutoff frequency). This app sweeps 3 / 6 / 12 c/deg because it is
+      measuring a contrast sensitivity function, not replicating a training protocol.
     </p>
   </div>
 
   <aside>
-    <h2>Stimulus</h2>
-
-    <div class="ctl">
-      <label for="cpd"><span>Spatial frequency</span><span id="cpdV">6.0 c/deg</span></label>
-      <input type="range" id="cpd" min="1" max="16" step="0.5" value="6">
+    <h2>Run</h2>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn" id="start">Start sweep</button>
+      <button class="btn secondary" id="abort" disabled>Abort</button>
     </div>
-
-    <div class="ctl">
-      <label for="con"><span>Michelson contrast</span><span id="conV">0.40</span></label>
-      <input type="range" id="con" min="0" max="1" step="0.01" value="0.4">
+    <div class="live">
+      <div><span>Block</span><b id="lvBlock">&mdash;</b></div>
+      <div><span>Trial</span><b id="lvTrial">&mdash;</b></div>
+      <div><span>Reversals</span><b id="lvRev">&mdash;</b></div>
+      <div><span>Target contrast now</span><b class="big" id="lvCon">&mdash;</b></div>
+      <div><span>Last response</span><b id="lvLast">&mdash;</b></div>
     </div>
-
-    <div class="ctl">
-      <label for="ori"><span>Orientation</span><span id="oriV">0&deg;</span></label>
-      <input type="range" id="ori" min="0" max="180" step="1" value="0">
-    </div>
-
-    <div class="ctl">
-      <label for="pha"><span>Phase</span><span id="phaV">0&deg;</span></label>
-      <input type="range" id="pha" min="0" max="360" step="1" value="0">
-    </div>
+    <table class="thr" id="thrTable">
+      <tr><td>3 c/deg threshold</td><td id="thr3">&mdash;</td></tr>
+      <tr><td>6 c/deg threshold</td><td id="thr6">&mdash;</td></tr>
+      <tr><td>12 c/deg threshold</td><td id="thr12">&mdash;</td></tr>
+    </table>
 
     <h2 style="margin-top:22px">Viewing geometry</h2>
     <div class="ctl">
-      <label for="dist"><span>Viewing distance</span><span></span></label>
+      <label for="dist"><span>Viewing distance (assumed)</span><span></span></label>
       <input type="number" id="dist" min="20" max="300" step="1" value="60"> cm
+    </div>
+    <div class="ctl">
+      <label for="scale"><span>Display scale (magnification)</span><span id="scaleV">1.0&times;</span></label>
+      <input type="range" id="scale" min="1" max="6" step="0.5" value="1">
     </div>
 
     <div class="derived">
-      <div><span>Pixels per degree</span><b id="ppd">&mdash;</b></div>
-      <div><span>Carrier wavelength</span><b id="lam">&mdash;</b></div>
-      <div><span>Envelope &sigma;</span><b id="sig">&mdash;</b></div>
+      <div><span>Pixels per degree (true, unscaled)</span><b id="ppd">&mdash;</b></div>
+      <div><span>Rendered at</span><b id="scaleUsed">&mdash;</b></div>
+      <div><span>Carrier wavelength (true / drawn)</span><b id="lam">&mdash;</b></div>
+      <div><span>Flanker separation</span><b id="sep">&mdash;</b></div>
+      <div><span>Flanker contrast</span><b id="fcon">&mdash;</b></div>
+      <div><span>Interval / ISI</span><b id="timing">&mdash;</b></div>
+      <div><span>Staircase</span><b id="rule">&mdash;</b></div>
     </div>
     <p style="font-size:13px;color:var(--dim);margin:12px 0 0">
-      Degrees are derived from an assumed 96&nbsp;CSS&nbsp;px/inch display.
-      On a different display the true angular size differs; the assumption is
-      shown rather than hidden.
+      Degrees are derived from an assumed 96&nbsp;CSS&nbsp;px/inch display and the
+      viewing distance above. Display scale magnifies the drawn stimulus for
+      visibility; the px/degree readout stays at the true, unscaled value, so
+      magnification is never disguised as angular size. Thresholds are in
+      8-bit pixel contrast, not gamma-linearized luminance; comparable within
+      one display, not across displays.
+    </p>
+  </aside>
+</main>
+
+<!-- =============================== MODE 2 =============================== -->
+<main id="modeRsvp" class="hidden">
+  <div class="stage">
+    <div class="framing">
+      This mode measures comprehension under RSVP (rapid serial visual presentation).
+      It does not measure, and is not known to improve, natural reading. Rayner et al.
+      (2016, <i>Psychological Science in the Public Interest</i>) concluded that RSVP
+      gains do not transfer to natural reading, for structural reasons: RSVP makes
+      regressions impossible (the 10&ndash;15% of eye movements that are backward
+      saccades, the brain's automatic repair mechanism when syntax or meaning fails to
+      integrate), and it abolishes parafoveal preview (pre-processing of the upcoming
+      word in peripheral vision, which natural reading depends on).
+    </div>
+
+    <div class="rsvp-field" id="rsvpField">
+      <div class="rsvp-word" id="rsvpWord">Press Start</div>
+    </div>
+
+    <div id="qBox" class="hidden" style="text-align:center">
+      <p class="note center" id="qCount"></p>
+      <p class="question" id="qText"></p>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="qTrue">True &nbsp;<kbd>F</kbd>/<kbd>&larr;</kbd></button>
+        <button class="btn" id="qFalse">False &nbsp;<kbd>J</kbd>/<kbd>&rarr;</kbd></button>
+      </div>
+    </div>
+
+    <div id="resultBox" class="hidden">
+      <h2 style="text-align:center">Score: speed paired with comprehension</h2>
+      <div class="score">
+        <div><div class="v" id="resWpm">&mdash;</div><div class="l">words / min</div></div>
+        <div><div class="v" id="resAcc">&mdash;</div><div class="l">comprehension</div></div>
+      </div>
+      <p class="note center" id="resNote"></p>
+    </div>
+  </div>
+
+  <aside>
+    <h2>Run</h2>
+    <div class="ctl">
+      <label for="passage"><span>Passage</span><span></span></label>
+      <select id="passage"></select>
+    </div>
+    <div class="ctl">
+      <label for="wpm"><span>Words per minute</span><span id="wpmV">250</span></label>
+      <input type="range" id="wpm" min="100" max="700" step="10" value="250">
+      <p class="note warn hidden" id="wpmWarn" style="margin:6px 0 0">
+        Above ~350 wpm, comprehension under RSVP declines measurably in controlled
+        studies (Di Nocera 2018, n=209). A higher number is not an achievement.
+      </p>
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn" id="rsvpStart">Start</button>
+      <button class="btn secondary" id="rsvpStop" disabled>Stop</button>
+    </div>
+    <div class="live">
+      <div><span>Words</span><b id="rsvpProg">&mdash;</b></div>
+    </div>
+
+    <h2 style="margin-top:22px">Runs this session</h2>
+    <table class="runs" id="runs">
+      <tr><th>Passage</th><th>wpm</th><th>Comprehension</th></tr>
+    </table>
+    <p class="note" style="margin-top:12px">
+      This score is independent of the contrast-detection score in the other mode.
+      No validated construct links the two; any relationship between them is an
+      untested hypothesis.
     </p>
   </aside>
 </main>
@@ -148,14 +300,15 @@
 <script>
 "use strict";
 
-/* ---------------------------------------------------------------------------
-   Constants
---------------------------------------------------------------------------- */
+/* ===========================================================================
+   Constants (mode 1: Gabor contrast detection with lateral masking)
+=========================================================================== */
 
 // CSS defines 1in = 96px. Every degree-to-pixel conversion rests on this, and
 // it is only true on a display at nominal CSS pixel density.
 const CSS_PX_PER_INCH = 96;
 const CM_PER_INCH = 2.54;
+const DEFAULT_DISTANCE_CM = 60;
 
 // Gaussian envelope size, in carrier wavelengths. sigma = 1 lambda keeps the
 // patch to roughly 2-3 visible cycles, as in the Polat lateral-masking work.
@@ -166,9 +319,64 @@ const ENVELOPE_CUTOFF_SIGMA = 3.0;
 
 const MEAN_LUMA = 128; // mid-gray, 8-bit
 
-/* ---------------------------------------------------------------------------
+// Carrier orientation. 0 = vertical stripes. Flankers are placed along the
+// stripe direction (above and below), which is what "collinear" means.
+const ORIENTATION_DEG = 0;
+
+// Flankers: high-contrast collinear Gabors above and below the target.
+// Separation is in multiples of the carrier wavelength (Polat & Sagi 1993;
+// Polat 2004). 3 lambda sits in the facilitation range.
+const FLANKER_CONTRAST = 0.6;
+const FLANKER_SEPARATION_LAMBDA = 3;
+
+// Trial chronometry. Polat et al. (2004) used stimulus intervals of 80-320 ms
+// separated by a 500 ms blank.
+const INTERVAL_MS = 150;
+const ISI_MS = 500;
+const PRE_TRIAL_MS = 500;   // "get ready" blank before interval 1
+const FEEDBACK_MS = 400;    // correct/incorrect flash after the response
+
+// Staircase rule. 2-down-1-up converges on 70.7% correct. In a two-interval
+// forced-choice task that is d' = sqrt(2) * z(0.707) ~= 0.77 (the often-quoted
+// 1.09 is the yes/no conversion and does not apply here).
+// The choice is paradigm-dependent, not canonical. External-noise paradigms
+// (Dosher & Lu 1999) use 3-down-1-up, converging on 79.3%. 2-down-1-up is
+// the rule used in amblyopia training protocols, where the easier task
+// limits frustration and fatigue, which is why it is the right one here.
+const STAIRCASE_DOWN = 2;
+const STAIRCASE_UP = 1;
+const START_CONTRAST = 0.5;
+// Contrast moves in log steps: a coarse factor until the first reversals,
+// then a fine factor. Values are conventional, not from a specific protocol.
+const STEP_FACTOR_COARSE = 2.0;
+const STEP_FACTOR_FINE = 1.26;      // ~0.1 log10 units
+const COARSE_REVERSALS = 2;
+// Block ends at this many reversals or this many trials, whichever first.
+// These are demo sizes: published protocols run ~900-1,000 trials/session.
+const REVERSALS_TO_STOP = 6;
+const MAX_TRIALS_PER_BLOCK = 40;
+const THRESHOLD_REVERSALS = 4;      // threshold = geometric mean of the last N reversals
+// 8-bit pixel values cannot represent contrast below ~1/127.5 on a mid-gray
+// field; thresholds at this floor are display-limited, not observer-limited.
+const MIN_CONTRAST = 1 / 127.5;
+const MAX_CONTRAST = 1.0;
+
+// CSF sweep. Deliberate deviation from the published training protocols,
+// which do not sweep fixed frequencies: Polat starts low (~1.5-5.9 c/deg)
+// and advances adaptively; Zhou et al. (2006) train at the individual's
+// cutoff frequency. This app sweeps fixed frequencies because it is
+// measuring a contrast sensitivity function, not replicating a protocol.
+const CSF_FREQUENCIES_CPD = [3, 6, 12];
+
+// Display scale multiplier. 1x is honest geometry (~39.6 px/deg at 60 cm),
+// which is invisible on a projector. Run demos at 3-4x. The px/deg readout
+// always shows the true, unscaled value alongside the scale in use.
+const DEFAULT_DISPLAY_SCALE = 1;
+const CUE_MARGIN_PX = 44;  // room kept at the top of the field for the interval cue
+
+/* ===========================================================================
    Viewing geometry
---------------------------------------------------------------------------- */
+=========================================================================== */
 
 // Pixels subtended by one degree of visual angle at a given viewing distance.
 function pxPerDegree(distanceCm) {
@@ -177,110 +385,516 @@ function pxPerDegree(distanceCm) {
   return distancePx * Math.tan(Math.PI / 180);
 }
 
-/* ---------------------------------------------------------------------------
+/* ===========================================================================
    Gabor rendering
 
-   L(x,y) = MEAN * (1 + C * sin(2*pi*x'/lambda + phase) * exp(-r^2/(2*sigma^2)))
+   L(x,y) = MEAN * (1 + sum_i C_i * sin(2*pi*x'_i/lambda + phase) * exp(-r_i^2/(2*sigma^2)))
 
    where x' is the coordinate along the carrier axis after rotating by the
-   patch orientation.
+   patch orientation. All patches in a frame are summed into one buffer so
+   overlapping envelope tails composite correctly instead of overwriting.
 
    Caveat: contrast here is Michelson contrast in 8-bit pixel-value units, not
    in linearized display luminance. Without per-display gamma calibration the
    two differ. Thresholds are therefore comparable within one session on one
    display, and not across displays.
---------------------------------------------------------------------------- */
+=========================================================================== */
 
-function drawGabor(ctx, opts) {
-  const { cx, cy, lambda, sigma, contrast, orientationDeg, phaseDeg } = opts;
+function renderField(ctx, canvas, patches) {
+  const W = canvas.width, H = canvas.height;
+  const buf = new Float32Array(W * H);   // signed modulation, in units of contrast
 
-  const radius = Math.ceil(sigma * ENVELOPE_CUTOFF_SIGMA);
-  const size = radius * 2 + 1;
+  for (const p of patches) {
+    if (p.contrast <= 0) continue;
+    const radius = Math.ceil(p.sigma * ENVELOPE_CUTOFF_SIGMA);
+    const theta = ORIENTATION_DEG * Math.PI / 180;
+    const cosT = Math.cos(theta), sinT = Math.sin(theta);
+    const phase = p.phaseDeg * Math.PI / 180;
+    const k = 2 * Math.PI / p.lambda;
+    const denom = 2 * p.sigma * p.sigma;
+    const cx = Math.round(p.cx), cy = Math.round(p.cy);
 
-  const x0 = Math.round(cx) - radius;
-  const y0 = Math.round(cy) - radius;
-
-  const img = ctx.createImageData(size, size);
-  const data = img.data;
-
-  const theta = orientationDeg * Math.PI / 180;
-  const cosT = Math.cos(theta);
-  const sinT = Math.sin(theta);
-  const phase = phaseDeg * Math.PI / 180;
-
-  const k = 2 * Math.PI / lambda;       // carrier angular frequency
-  const denom = 2 * sigma * sigma;
-  const amplitude = contrast * (MEAN_LUMA - 0.5); // keeps C=1 inside 0..255
-
-  for (let j = 0; j < size; j++) {
-    const dy = j - radius;
-    for (let i = 0; i < size; i++) {
-      const dx = i - radius;
-
-      const xr = dx * cosT + dy * sinT;          // along carrier axis
-      const envelope = Math.exp(-(dx * dx + dy * dy) / denom);
-      const carrier = Math.sin(k * xr + phase);
-
-      const v = MEAN_LUMA + amplitude * carrier * envelope;
-      const b = v < 0 ? 0 : v > 255 ? 255 : v;
-
-      const p = (j * size + i) * 4;
-      data[p] = b; data[p + 1] = b; data[p + 2] = b;
-      // Alpha follows the envelope so the patch composites onto the mid-gray
-      // field with no visible square edge.
-      data[p + 3] = 255;
+    for (let y = Math.max(0, cy - radius); y <= Math.min(H - 1, cy + radius); y++) {
+      const dy = y - cy;
+      for (let x = Math.max(0, cx - radius); x <= Math.min(W - 1, cx + radius); x++) {
+        const dx = x - cx;
+        const xr = dx * cosT + dy * sinT;
+        const envelope = Math.exp(-(dx * dx + dy * dy) / denom);
+        buf[y * W + x] += p.contrast * Math.sin(k * xr + phase) * envelope;
+      }
     }
   }
 
-  ctx.putImageData(img, x0, y0);
+  const img = ctx.createImageData(W, H);
+  const data = img.data;
+  const amp = MEAN_LUMA - 0.5;  // keeps C=1 inside 0..255
+  for (let i = 0; i < W * H; i++) {
+    let v = MEAN_LUMA + amp * buf[i];
+    v = v < 0 ? 0 : v > 255 ? 255 : v;
+    const q = i * 4;
+    data[q] = v; data[q + 1] = v; data[q + 2] = v; data[q + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
 }
 
-function clearField(ctx, canvas) {
-  ctx.fillStyle = "rgb(128,128,128)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-/* ---------------------------------------------------------------------------
-   Step 1 preview wiring
---------------------------------------------------------------------------- */
-
-const canvas = document.getElementById("stim");
-const ctx = canvas.getContext("2d", { willReadFrequently: true });
+/* ===========================================================================
+   Mode 1 state and geometry
+=========================================================================== */
 
 const el = (id) => document.getElementById(id);
-const inputs = ["cpd", "con", "ori", "pha", "dist"].map(el);
+const canvas = el("stim");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+const csfCanvas = el("csf");
+const csfCtx = csfCanvas.getContext("2d");
 
-function render() {
-  const cpd = parseFloat(el("cpd").value);
-  const contrast = parseFloat(el("con").value);
-  const orientation = parseFloat(el("ori").value);
-  const phaseDeg = parseFloat(el("pha").value);
-  const distanceCm = parseFloat(el("dist").value) || 60;
-
+function geometry(cpd) {
+  const distanceCm = parseFloat(el("dist").value) || DEFAULT_DISTANCE_CM;
+  const requested = parseFloat(el("scale").value) || DEFAULT_DISPLAY_SCALE;
   const ppd = pxPerDegree(distanceCm);
-  const lambda = ppd / cpd;              // px per cycle
-  const sigma = lambda * SIGMA_LAMBDA;
-
-  el("cpdV").textContent = cpd.toFixed(1) + " c/deg";
-  el("conV").textContent = contrast.toFixed(2);
-  el("oriV").textContent = orientation.toFixed(0) + "°";
-  el("phaV").textContent = phaseDeg.toFixed(0) + "°";
-  el("ppd").textContent = ppd.toFixed(1) + " px";
-  el("lam").textContent = lambda.toFixed(1) + " px";
-  el("sig").textContent = sigma.toFixed(1) + " px";
-
-  clearField(ctx, canvas);
-  drawGabor(ctx, {
-    cx: canvas.width / 2,
-    cy: canvas.height / 2,
-    lambda, sigma, contrast,
-    orientationDeg: orientation,
-    phaseDeg
-  });
+  const lambdaTrue = ppd / cpd;
+  // Half-extent of the three-patch array at 1x: separation plus the envelope cutoff.
+  const halfExtent = lambdaTrue * (FLANKER_SEPARATION_LAMBDA + SIGMA_LAMBDA * ENVELOPE_CUTOFF_SIGMA);
+  const maxScale = (canvas.height / 2 - CUE_MARGIN_PX) / halfExtent;
+  const scale = Math.min(requested, maxScale);
+  const lambda = lambdaTrue * scale;
+  return {
+    cpd, distanceCm, ppd, lambdaTrue, requested, scale, clamped: scale < requested,
+    lambda, sigma: lambda * SIGMA_LAMBDA, sep: lambda * FLANKER_SEPARATION_LAMBDA
+  };
 }
 
-inputs.forEach((i) => i.addEventListener("input", render));
-render();
+function drawFrame(geo, { showTarget, targetContrast, phaseDeg, cue, cueColor }) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const theta = ORIENTATION_DEG * Math.PI / 180;
+  // Along the stripes: perpendicular to the carrier axis.
+  const ux = -Math.sin(theta), uy = Math.cos(theta);
+  const patches = [
+    { cx: cx + ux * geo.sep, cy: cy + uy * geo.sep, lambda: geo.lambda, sigma: geo.sigma, contrast: FLANKER_CONTRAST, phaseDeg },
+    { cx: cx - ux * geo.sep, cy: cy - uy * geo.sep, lambda: geo.lambda, sigma: geo.sigma, contrast: FLANKER_CONTRAST, phaseDeg },
+  ];
+  if (showTarget) patches.push({ cx, cy, lambda: geo.lambda, sigma: geo.sigma, contrast: targetContrast, phaseDeg });
+  renderField(ctx, canvas, patches);
+  drawCue(cue, cueColor);
+}
+
+function drawBlank(cue, cueColor) {
+  ctx.fillStyle = "rgb(128,128,128)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Fixation dot only on blank frames, so it never sits on the target.
+  ctx.fillStyle = "rgb(60,60,60)";
+  ctx.beginPath(); ctx.arc(canvas.width / 2, canvas.height / 2, 3, 0, Math.PI * 2); ctx.fill();
+  drawCue(cue, cueColor);
+}
+
+function drawCue(text, color) {
+  if (!text) return;
+  ctx.font = "700 34px ui-sans-serif, system-ui, sans-serif";
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillStyle = color || "rgb(20,20,20)";
+  ctx.fillText(text, 16, 8);
+}
+
+/* ===========================================================================
+   Staircase
+=========================================================================== */
+
+class Staircase {
+  constructor() {
+    this.contrast = START_CONTRAST;
+    this.trials = 0;
+    this.correctRun = 0;
+    this.wrongRun = 0;
+    this.lastDir = 0;
+    this.reversals = [];
+    this.history = [];
+  }
+  stepFactor() {
+    return this.reversals.length < COARSE_REVERSALS ? STEP_FACTOR_COARSE : STEP_FACTOR_FINE;
+  }
+  update(correct) {
+    this.trials++;
+    this.history.push({ contrast: this.contrast, correct });
+    let dir = 0;
+    if (correct) {
+      this.correctRun++; this.wrongRun = 0;
+      if (this.correctRun >= STAIRCASE_DOWN) { dir = -1; this.correctRun = 0; }
+    } else {
+      this.wrongRun++; this.correctRun = 0;
+      if (this.wrongRun >= STAIRCASE_UP) { dir = +1; this.wrongRun = 0; }
+    }
+    if (dir === 0) return;
+    if (this.lastDir !== 0 && dir !== this.lastDir) this.reversals.push(this.contrast);
+    this.lastDir = dir;
+    const f = this.stepFactor();
+    this.contrast = dir < 0 ? this.contrast / f : this.contrast * f;
+    this.contrast = Math.min(MAX_CONTRAST, Math.max(MIN_CONTRAST, this.contrast));
+  }
+  done() {
+    return this.reversals.length >= REVERSALS_TO_STOP || this.trials >= MAX_TRIALS_PER_BLOCK;
+  }
+  // Geometric mean of the last THRESHOLD_REVERSALS reversal contrasts. Any
+  // estimate built from fewer reversals than that is flagged provisional
+  // (the block hit the trial cap before converging). With fewer than two
+  // reversals there is nothing to average, so fall back to the geometric
+  // mean of the last few trial contrasts.
+  threshold() {
+    let xs = this.reversals.slice(-THRESHOLD_REVERSALS);
+    const provisional = xs.length < THRESHOLD_REVERSALS;
+    if (xs.length < 2) xs = this.history.slice(-6).map(h => h.contrast);
+    if (xs.length === 0) return null;
+    const gm = Math.exp(xs.reduce((a, c) => a + Math.log(c), 0) / xs.length);
+    return { contrast: gm, provisional };
+  }
+}
+
+/* ===========================================================================
+   Trial loop
+=========================================================================== */
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let keyResolver = null;
+function waitKey(map) {
+  return new Promise((resolve) => {
+    keyResolver = (key) => { if (key === null) { keyResolver = null; resolve(null); } else if (key in map) { keyResolver = null; resolve(map[key]); } };
+  });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
+  if (keyResolver) { keyResolver(e.key); e.preventDefault(); }
+});
+const INTERVAL_KEYS = { f: 1, F: 1, ArrowLeft: 1, j: 2, J: 2, ArrowRight: 2 };
+
+let runId = 0;
+const sweep = { running: false, block: null, stair: null, results: {} };
+
+function fmtC(c) { return c == null ? "—" : c.toFixed(3); }
+
+function updateLive() {
+  const s = sweep.stair;
+  el("lvBlock").textContent = sweep.block ? `${sweep.block} c/deg (${CSF_FREQUENCIES_CPD.indexOf(sweep.block) + 1} of ${CSF_FREQUENCIES_CPD.length})` : "—";
+  el("lvTrial").textContent = s ? `${s.trials} / ${MAX_TRIALS_PER_BLOCK}` : "—";
+  el("lvRev").textContent = s ? `${s.reversals.length} / ${REVERSALS_TO_STOP}` : "—";
+  el("lvCon").textContent = s ? fmtC(s.contrast) : "—";
+  for (const f of CSF_FREQUENCIES_CPD) {
+    const r = sweep.results[f];
+    el("thr" + f).textContent = r
+      ? fmtC(r.contrast) + (r.scale > 1 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "") + (r.provisional ? " (provisional)" : "")
+      : "—";
+  }
+}
+
+function updateGeometryReadout() {
+  const geo = geometry(sweep.block || CSF_FREQUENCIES_CPD[1]);
+  el("scaleV").textContent = geo.requested.toFixed(1) + "×";
+  el("ppd").textContent = geo.ppd.toFixed(1) + " px/deg";
+  el("scaleUsed").textContent = geo.scale.toFixed(1) + "×" + (geo.clamped ? " (clamped to fit)" : "");
+  el("lam").textContent = `${geo.lambdaTrue.toFixed(1)} / ${geo.lambda.toFixed(1)} px`;
+  el("sep").textContent = `${FLANKER_SEPARATION_LAMBDA} λ = ${geo.sep.toFixed(0)} px drawn`;
+  el("fcon").textContent = FLANKER_CONTRAST.toFixed(2);
+  el("timing").textContent = `${INTERVAL_MS} / ${ISI_MS} ms`;
+  el("rule").textContent = `${STAIRCASE_DOWN}-down-${STAIRCASE_UP}-up (70.7%)`;
+  return geo;
+}
+
+function drawIdle() {
+  const geo = updateGeometryReadout();
+  drawFrame(geo, { showTarget: true, targetContrast: 0.25, phaseDeg: 0, cue: "Preview: target 0.25 contrast" });
+}
+
+// Drop focus from whatever control was last clicked or dragged, so response
+// keys reach the document instead of a slider (Safari and Firefox on macOS do
+// not move focus to a button on click).
+function blurControls() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+
+async function runSweep() {
+  const my = ++runId;
+  blurControls();
+  sweep.running = true; sweep.results = {};
+  el("start").disabled = true; el("abort").disabled = false;
+  el("dist").disabled = true; el("scale").disabled = true;
+  el("lvLast").textContent = "—";
+  drawCSF();
+
+  for (const cpd of CSF_FREQUENCIES_CPD) {
+    const stair = new Staircase();
+    sweep.block = cpd; sweep.stair = stair;
+    updateLive();
+    // Geometry is snapshotted once per block so every trial in a staircase
+    // shares one rendered wavelength and separation. The distance and scale
+    // controls are disabled for the duration of the sweep.
+    const geo = updateGeometryReadout();
+
+    while (!stair.done()) {
+      if (runId !== my) return;
+      const targetInterval = Math.random() < 0.5 ? 1 : 2;
+      // Spatial phase is fixed within the trial: both intervals use the same
+      // phase, so nothing but the target's presence differs between them.
+      // Varying it would let an observer detect the target from a motion
+      // artifact instead of from contrast.
+      const phaseDeg = Math.random() * 360;
+      const contrast = stair.contrast;
+
+      drawBlank("Ready");                                   await sleep(PRE_TRIAL_MS);
+      if (runId !== my) return;
+      drawFrame(geo, { showTarget: targetInterval === 1, targetContrast: contrast, phaseDeg, cue: "1" });
+      await sleep(INTERVAL_MS);
+      if (runId !== my) return;
+      drawBlank("");                                        await sleep(ISI_MS);
+      if (runId !== my) return;
+      drawFrame(geo, { showTarget: targetInterval === 2, targetContrast: contrast, phaseDeg, cue: "2" });
+      await sleep(INTERVAL_MS);
+      if (runId !== my) return;
+      drawBlank("Which interval?  1 (F)  or  2 (J)");
+
+      const resp = await waitKey(INTERVAL_KEYS);
+      if (runId !== my || resp === null) return;
+      const correct = resp === targetInterval;
+      stair.update(correct);
+      el("lvLast").textContent = correct ? "correct" : "incorrect";
+      el("lvLast").style.color = correct ? "var(--good)" : "var(--bad)";
+      updateLive();
+      drawBlank(correct ? "Correct" : "Incorrect", correct ? "rgb(30,110,60)" : "rgb(150,40,40)");
+      await sleep(FEEDBACK_MS);
+      if (runId !== my) return;
+    }
+
+    // Magnifying the drawn stimulus lowers the angular spatial frequency the
+    // observer actually sees to cpd / scale. The threshold is recorded and
+    // plotted at that effective frequency, never at the nominal one.
+    sweep.results[cpd] = Object.assign(stair.threshold(), { cpdEffective: cpd / geo.scale, scale: geo.scale });
+    updateLive();
+    drawCSF();
+  }
+
+  finishSweep("Sweep complete");
+}
+
+function finishSweep(msg) {
+  sweep.running = false; sweep.block = null; sweep.stair = null;
+  el("start").disabled = false; el("abort").disabled = true;
+  el("dist").disabled = false; el("scale").disabled = false;
+  drawBlank(msg);
+  updateLive();
+}
+
+function abortSweep() {
+  if (!sweep.running) return;
+  runId++;
+  if (keyResolver) keyResolver(null);
+  finishSweep("Aborted");
+}
+
+/* ===========================================================================
+   CSF plot: sensitivity (1/threshold) vs spatial frequency, log-log
+=========================================================================== */
+
+function drawCSF() {
+  const c = csfCtx, W = csfCanvas.width, H = csfCanvas.height;
+  const L = 70, R = 20, T = 20, B = 46;
+  c.fillStyle = "#15151a"; c.fillRect(0, 0, W, H);
+  const fMin = 0.5, fMax = 30, sMin = 1, sMax = 200;
+  const xOf = (f) => L + (Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin)) * (W - L - R);
+  const yOf = (s) => T + (1 - (Math.log10(s) - Math.log10(sMin)) / (Math.log10(sMax) - Math.log10(sMin))) * (H - T - B);
+
+  c.strokeStyle = "#2a2a33"; c.lineWidth = 1;
+  c.fillStyle = "#9a9aa8"; c.font = "14px ui-sans-serif, system-ui, sans-serif";
+  c.textAlign = "center"; c.textBaseline = "top";
+  for (const f of [0.5, 1, 2, 3, 6, 12, 24]) {
+    c.beginPath(); c.moveTo(xOf(f), T); c.lineTo(xOf(f), H - B); c.stroke();
+    c.fillText(String(f), xOf(f), H - B + 6);
+  }
+  c.textAlign = "right"; c.textBaseline = "middle";
+  for (const s of [1, 3, 10, 30, 100]) {
+    c.beginPath(); c.moveTo(L, yOf(s)); c.lineTo(W - R, yOf(s)); c.stroke();
+    c.fillText(String(s), L - 8, yOf(s));
+  }
+  c.textAlign = "center"; c.textBaseline = "bottom";
+  c.fillText("spatial frequency (c/deg)", L + (W - L - R) / 2, H - 4);
+  c.save(); c.translate(16, T + (H - T - B) / 2); c.rotate(-Math.PI / 2);
+  c.textBaseline = "top"; c.fillText("sensitivity (1 / threshold)", 0, 0); c.restore();
+
+  // Points sit at the effective (magnified) frequency, not the nominal block label.
+  const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f]).map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }));
+  if (pts.length > 1) {
+    c.strokeStyle = "#6ea8ff"; c.lineWidth = 3; c.beginPath();
+    pts.forEach((p, i) => i ? c.lineTo(xOf(p.f), yOf(p.s)) : c.moveTo(xOf(p.f), yOf(p.s)));
+    c.stroke();
+  }
+  for (const p of pts) {
+    c.fillStyle = p.p ? "#ffb454" : "#6ea8ff";
+    c.beginPath(); c.arc(xOf(p.f), yOf(p.s), 8, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#e8e8ee"; c.font = "600 15px ui-sans-serif, system-ui, sans-serif";
+    c.textAlign = "center"; c.textBaseline = "bottom";
+    c.fillText(p.s.toFixed(1), xOf(p.f), yOf(p.s) - 12);
+  }
+  if (pts.length === 0) {
+    c.fillStyle = "#9a9aa8"; c.font = "16px ui-sans-serif, system-ui, sans-serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText("No thresholds yet. Start a sweep.", L + (W - L - R) / 2, T + (H - T - B) / 2);
+  }
+}
+
+/* ===========================================================================
+   Mode 1 wiring
+=========================================================================== */
+
+el("start").addEventListener("click", () => { if (!sweep.running) runSweep(); });
+el("abort").addEventListener("click", abortSweep);
+["dist", "scale"].forEach((id) => el(id).addEventListener("input", () => { if (sweep.running) updateGeometryReadout(); else drawIdle(); }));
+
+/* ===========================================================================
+   Mode 2: RSVP reading with comprehension questions
+=========================================================================== */
+
+const RSVP_DEFAULT_WPM = 250;
+// Comprehension under RSVP holds to ~300-350 wpm and declines measurably
+// beyond it (Di Nocera 2018, n=209). This is about performance inside the
+// RSVP format; it says nothing about transfer to natural reading.
+const RSVP_WARN_WPM = 350;
+
+// Short public-domain passages (traditional Aesop fables, retold).
+const PASSAGES = [
+  {
+    title: "The Tortoise and the Hare",
+    text: "A hare was making fun of a tortoise for being so slow. The tortoise, tired of the teasing, challenged the hare to a race. The hare, sure of an easy win, dashed ahead and soon left the tortoise far behind. Halfway along the course, the hare decided there was time for a nap in the shade of a tree. Meanwhile the tortoise plodded on without stopping. When the hare woke and ran for the finish, he found the tortoise already there, resting calmly after her steady walk.",
+    questions: [
+      { q: "The tortoise proposed the race.", a: true },
+      { q: "The hare stopped to eat a meal partway through.", a: false },
+      { q: "The tortoise kept moving without stopping.", a: true },
+      { q: "The hare reached the finish line first.", a: false },
+    ]
+  },
+  {
+    title: "The North Wind and the Sun",
+    text: "The North Wind and the Sun argued about which of them was stronger. They agreed that whoever could make a passing traveler remove his cloak would be declared the winner. The North Wind went first and blew with all its might, but the harder it blew, the more tightly the traveler wrapped the cloak around himself. Then the Sun shone gently, and the traveler grew warm. Soon he unfastened the cloak, and before long he took it off entirely to rest in the shade. The Sun was declared the winner.",
+    questions: [
+      { q: "The contest was about making a traveler take off his hat.", a: false },
+      { q: "The North Wind tried first.", a: true },
+      { q: "The wind's blowing made the traveler hold the cloak tighter.", a: true },
+      { q: "The North Wind won the contest.", a: false },
+    ]
+  },
+  {
+    title: "The Crow and the Pitcher",
+    text: "A thirsty crow found a pitcher with a little water at the bottom. She pushed her beak into the neck of the pitcher, but the water was too far down to reach. She tried to tip the pitcher over, but it was too heavy. Then she saw some small pebbles lying nearby. One by one she picked them up and dropped them into the pitcher. With each pebble the water rose a little higher, until at last it came within reach, and the crow was able to drink.",
+    questions: [
+      { q: "The pitcher was full of water when the crow found it.", a: false },
+      { q: "The crow tried to tip the pitcher over.", a: true },
+      { q: "The crow dropped pebbles into the pitcher.", a: true },
+      { q: "In the end the crow flew away without drinking.", a: false },
+    ]
+  },
+  {
+    title: "The Fox and the Grapes",
+    text: "One hot afternoon a fox came upon a bunch of ripe grapes hanging from a vine that had been trained along a high branch. The grapes looked juicy, and the fox was thirsty. She leaped for them, but fell short. She backed up, ran, and jumped again, and again missed. After several more attempts she gave up. Walking away with her nose in the air, she said to herself that the grapes were surely sour anyway, and not worth the trouble.",
+    questions: [
+      { q: "The grapes were hanging low, within easy reach.", a: false },
+      { q: "The fox jumped for the grapes more than once.", a: true },
+      { q: "The fox eventually ate the grapes.", a: false },
+      { q: "The fox declared the grapes were probably sour.", a: true },
+    ]
+  }
+];
+
+const rsvp = { running: false, runId: 0 };
+const TF_KEYS = { f: true, F: true, ArrowLeft: true, j: false, J: false, ArrowRight: false };
+
+PASSAGES.forEach((p, i) => {
+  const o = document.createElement("option"); o.value = i; o.textContent = `${p.title} (${p.text.split(/\s+/).length} words)`;
+  el("passage").appendChild(o);
+});
+
+function updateWpm() {
+  const w = parseInt(el("wpm").value, 10);
+  el("wpmV").textContent = String(w);
+  el("wpmWarn").classList.toggle("hidden", w <= RSVP_WARN_WPM);
+}
+el("wpm").value = RSVP_DEFAULT_WPM;
+el("wpm").addEventListener("input", updateWpm);
+updateWpm();
+
+async function runRsvp() {
+  const my = ++rsvp.runId;
+  blurControls();
+  const passage = PASSAGES[parseInt(el("passage").value, 10)];
+  const wpm = parseInt(el("wpm").value, 10);
+  const words = passage.text.split(/\s+/);
+  const msPerWord = 60000 / wpm;
+
+  rsvp.running = true;
+  el("rsvpStart").disabled = true; el("rsvpStop").disabled = false;
+  el("qBox").classList.add("hidden"); el("resultBox").classList.add("hidden");
+
+  // Countdown so the observer is fixating when the first word lands.
+  for (const c of ["3", "2", "1"]) {
+    el("rsvpWord").textContent = c; el("rsvpProg").textContent = `0 / ${words.length}`;
+    await sleep(600); if (rsvp.runId !== my) return;
+  }
+  for (let i = 0; i < words.length; i++) {
+    el("rsvpWord").textContent = words[i];
+    el("rsvpProg").textContent = `${i + 1} / ${words.length}`;
+    await sleep(msPerWord); if (rsvp.runId !== my) return;
+  }
+  el("rsvpWord").textContent = "Questions";
+
+  // Comprehension questions, scored and shown as prominently as speed.
+  let correct = 0;
+  el("qBox").classList.remove("hidden");
+  for (let i = 0; i < passage.questions.length; i++) {
+    const q = passage.questions[i];
+    el("qCount").textContent = `Question ${i + 1} of ${passage.questions.length}: true or false?`;
+    el("qText").textContent = q.q;
+    const ans = await waitKey(TF_KEYS);
+    if (rsvp.runId !== my || ans === null) return;
+    if (ans === q.a) correct++;
+  }
+  el("qBox").classList.add("hidden");
+
+  const acc = correct / passage.questions.length;
+  el("resWpm").textContent = String(wpm);
+  el("resAcc").textContent = Math.round(acc * 100) + "%";
+  el("resNote").textContent = `${correct} of ${passage.questions.length} correct on "${passage.title}". ` +
+    (wpm > RSVP_WARN_WPM ? "Above the ~350 wpm band where comprehension holds under RSVP." : "");
+  el("resultBox").classList.remove("hidden");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${passage.title}</td><td>${wpm}</td><td>${Math.round(acc * 100)}% (${correct}/${passage.questions.length})</td>`;
+  el("runs").appendChild(tr);
+  el("rsvpWord").textContent = "Done";
+  stopRsvp(false);
+}
+
+function stopRsvp(aborted = true) {
+  rsvp.running = false;
+  if (aborted) { rsvp.runId++; if (keyResolver) keyResolver(null); el("rsvpWord").textContent = "Stopped"; el("qBox").classList.add("hidden"); }
+  el("rsvpStart").disabled = false; el("rsvpStop").disabled = true;
+}
+
+el("rsvpStart").addEventListener("click", () => { if (!rsvp.running) runRsvp(); });
+el("rsvpStop").addEventListener("click", () => stopRsvp(true));
+el("qTrue").addEventListener("click", () => { if (keyResolver) keyResolver("f"); });
+el("qFalse").addEventListener("click", () => { if (keyResolver) keyResolver("j"); });
+
+/* ===========================================================================
+   Mode switcher. The two modes keep two independent scores; nothing here
+   combines them.
+=========================================================================== */
+
+function showMode(which) {
+  const gabor = which === "gabor";
+  if (!gabor) abortSweep(); else if (rsvp.running) stopRsvp(true);
+  el("modeGabor").classList.toggle("hidden", !gabor);
+  el("modeRsvp").classList.toggle("hidden", gabor);
+  el("tabGabor").setAttribute("aria-selected", gabor);
+  el("tabRsvp").setAttribute("aria-selected", !gabor);
+}
+el("tabGabor").addEventListener("click", () => showMode("gabor"));
+el("tabRsvp").addEventListener("click", () => showMode("rsvp"));
+
+drawIdle();
+updateLive();
+drawCSF();
 </script>
 </body>
 </html>

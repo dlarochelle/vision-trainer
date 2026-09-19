@@ -33,6 +33,12 @@ The perceptual-learning entries:
   vision and contrast sensitivity in dissatisfied patients with
   MF-IOLs: results of an RCT. Am J Ophthalmol. 2024;269:226-235.
   https://www.ajo.com/article/S0002-9394(24)00386-6/abstract
+  **Needs verification.** An independent research pass instead
+  surfaced a 2024 Tang et al. in *Frontiers in Neuroscience* (N=11,
+  prospective observational, post-SMILE) reporting no significant
+  change in uncorrected acuity or refraction. These may be two
+  different papers or one miscited one. Check against PubMed before
+  citing either; do not describe the observational study as an RCT.
 - RevitalVision published studies index.
   https://doctors.revitalvision.com/about/studies-posters/
 
@@ -81,13 +87,18 @@ measurement. Any overlap between them is inferential and unmeasured.
 Di Nocera et al. 2018, Int J Human Factors and Ergonomics,
 between-groups, n=209: comprehension is statistically
 indistinguishable from normal reading at RSVP rates of 250 to 350 wpm,
-and declines monotonically at 400 and 450 wpm. Default the trainer to
-300 wpm. Users may exceed it; the interface must not present a high
-wpm number as an accomplishment.
+and declines monotonically at 400 and 450 wpm. The build defaults to
+250 wpm and warns above 350. Users may exceed it; the interface does
+not present a high wpm number as an accomplishment.
 
-No published evidence shows RSVP gains persisting outside the RSVP
-format. Do not imply the trainer makes anyone a faster reader of
-ordinary text.
+The consensus goes further than "unvalidated". Rayner et al. (2016,
+Psychological Science in the Public Interest) concluded that RSVP
+gains do not transfer to natural reading, for structural reasons: RSVP
+makes regressions impossible (the 10-15% of eye movements that are
+backward saccades, the reader's automatic repair mechanism when syntax
+or meaning fails to integrate), and it abolishes parafoveal preview.
+The mode's UI states this. Do not imply the page makes anyone a faster
+reader of ordinary text.
 
 ## Protocol parameters from the published work
 
@@ -98,23 +109,30 @@ are traceable:
 - **Task.** The strongest lineage, Polat 2004 PNAS through the
   RevitalVision pivotal trial to Tang 2024, is near-threshold contrast
   *detection* of a central Gabor flanked by two collinear
-  high-contrast Gabors at about 0.6 Michelson. Orientation
-  discrimination also appears in the literature and is a legitimate
-  psychophysical task; phase discrimination is rare. The build uses
-  2AFC orientation for tractability. That is a departure from the
-  cited papers and should be stated rather than implied away. Adding
-  collinear flankers is the cheapest route to closer alignment.
+  high-contrast Gabors at about 0.6 Michelson. **The build implements
+  this**: two-interval forced-choice contrast detection, flankers at
+  3 carrier wavelengths in both intervals, target in one, spatial
+  phase fixed within a trial so a motion artifact cannot substitute
+  for contrast. Orientation discrimination also appears in the
+  literature; an earlier draft used it and was replaced.
 - **Spatial frequency.** Roughly 1.5 to 12 cpd, most work
-  concentrating on 3 to 12 cpd, swept rather than fixed. Protocols
-  disagree: some train a single frequency, others sweep to encourage
-  generalization.
-- **Staircase.** Not specified in most publications. Adaptive
-  threshold tracking is described; the rule, 2-down-1-up versus QUEST
-  or ZEST, usually is not. There is no canonical choice to copy.
-- **Dose.** 30-minute sessions, 3 to 4 per week, 20 to 30 sessions
-  before measurable acuity or contrast change, accruing to about 45
-  sessions over 2 to 3 months. Trials per session are rarely
-  disclosed, described only as hundreds.
+  concentrating on 3 to 12 cpd. The training protocols do not sweep
+  fixed frequencies: Polat starts low (about 1.5-5.9 c/deg) and
+  advances adaptively; Zhou et al. (2006) train at the individual's
+  cutoff frequency. The build sweeps fixed 3 / 6 / 12 c/deg because
+  it is measuring a contrast sensitivity function, not replicating a
+  training protocol. The UI states this deviation.
+- **Staircase.** The choice is paradigm-dependent, not canonical.
+  3-down-1-up converges on 79.3% and is used in external-noise work
+  (Dosher & Lu 1999); 2-down-1-up converges on 70.7% (d' ~= 0.77 in a two-interval task) and
+  is used in the clinical training protocols, where the easier task
+  limits frustration and fatigue. The build uses 2-down-1-up, with the
+  rule and the caveat as named constants and a code comment.
+- **Dose.** Polat-derived commercial protocols run 900-1,000 trials
+  per session, 3 to 5 sessions per week, for 30 to 40 sessions over
+  4 to 6 months; Zhou et al. averaged 12.7 sessions to plateau. A demo
+  block here is a few dozen trials, and the UI says so next to the
+  CSF output.
 
 The dose figure has a direct build consequence: nothing measurable
 happens inside one session, so a within-session improvement curve
@@ -171,10 +189,11 @@ Specifically off limits:
 - **Neural rewiring.** Rewires the visual cortex, permanently changes
   neural circuitry. Speculative, and unnecessary.
 
-The defensible description is narrow and should be used verbatim: an
-experimental visual discrimination and RSVP training page that may
-improve performance on those specific tasks, not a medical device, not
-a substitute for eye care, not validated for anything.
+The defensible description is narrow: an experimental page that
+measures a contrast sensitivity function under lateral masking and
+comprehension under RSVP, not a medical device, not a substitute for
+eye care, not validated for anything. Describing what the page
+measures is safe; describing what it does to the user is not.
 
 ## Safety
 

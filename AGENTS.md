@@ -49,41 +49,18 @@ construct linking contrast sensitivity to RSVP reading. If the two are
 displayed together, label the link explicitly as an untested
 hypothesis.
 
-## Where the docs still lag the build
+## Docs and build
 
-`README.md` and `docs/EVIDENCE.md` were substantially corrected in
-commit `edacad7`, which split the merged score and recorded the
-protocol parameters. Two gaps remain as of this commit:
+`README.md` and `docs/EVIDENCE.md` were updated on 2026-09-19 to match
+the build: contrast detection with collinear flankers, two independent
+scores, 2-down-1-up staircase with the paradigm-dependence caveat, a
+fixed 3/6/12 c/deg sweep stated as a deviation from the training
+protocols, and RSVP at 250 wpm with the Rayner 2016 non-transfer
+framing. Where a session prompt and the docs disagree, check the
+build; the constants at the top of `index.html` are authoritative.
 
-- **Task paradigm.** Both docs still describe **2AFC orientation
-  discrimination**, and EVIDENCE explicitly flags this as a departure
-  from the cited lineage. The build uses **contrast detection with
-  collinear high-contrast flankers** (Polat 2004), which is the
-  paradigm with the strongest evidence. EVIDENCE already calls adding
-  flankers "the cheapest route to closer alignment" — the build
-  takes that route.
-- **RSVP default.** README says 300 wpm; the build defaults to
-  **250 wpm** and warns above 350. Both sit inside the band where
-  comprehension holds (Di Nocera 2018, n=209), so this is a
-  conservatism choice, not a correction.
-
-Update both files once the build settles. Until then, a session
-prompt and this file are authoritative where they disagree.
-
-Two refinements from a later research pass that the docs do not yet
-carry:
-
-- EVIDENCE says no canonical staircase exists. More precisely, the
-  choice is **paradigm-dependent**: 3-down-1-up converges on 79.3%
-  and is used in external-noise work (Dosher & Lu 1999); 2-down-1-up
-  converges on **70.7%** and is used in amblyopia training, where the
-  easier task limits fatigue. The build uses 2-down-1-up.
-- The Tang 2024 citation is **unresolved**. EVIDENCE cites it via the
-  RevitalVision lineage; an independent pass surfaced a 2024 Tang et
-  al. in *Frontiers in Neuroscience* (N=11, prospective
-  observational, post-SMILE) reporting no significant acuity change.
-  These may be different papers. Verify against PubMed before citing
-  either publicly.
+The Tang 2024 citation in EVIDENCE is **unresolved** and flagged
+there. Verify against PubMed before citing it publicly.
 
 Other docs:
 
