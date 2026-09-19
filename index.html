@@ -528,16 +528,15 @@ class Staircase {
   done() {
     return this.reversals.length >= REVERSALS_TO_STOP || this.trials >= MAX_TRIALS_PER_BLOCK;
   }
-  // Geometric mean of the last THRESHOLD_REVERSALS reversal contrasts. If the
-  // block hit the trial cap with too few reversals, fall back to the geometric
-  // mean of the last few trial contrasts and flag it as provisional.
+  // Geometric mean of the last THRESHOLD_REVERSALS reversal contrasts. Any
+  // estimate built from fewer reversals than that is flagged provisional
+  // (the block hit the trial cap before converging). With fewer than two
+  // reversals there is nothing to average, so fall back to the geometric
+  // mean of the last few trial contrasts.
   threshold() {
     let xs = this.reversals.slice(-THRESHOLD_REVERSALS);
-    let provisional = false;
-    if (xs.length < 2) {
-      xs = this.history.slice(-6).map(h => h.contrast);
-      provisional = true;
-    }
+    const provisional = xs.length < THRESHOLD_REVERSALS;
+    if (xs.length < 2) xs = this.history.slice(-6).map(h => h.contrast);
     if (xs.length === 0) return null;
     const gm = Math.exp(xs.reduce((a, c) => a + Math.log(c), 0) / xs.length);
     return { contrast: gm, provisional };
