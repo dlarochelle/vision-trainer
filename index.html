@@ -804,6 +804,238 @@ const PASSAGES = [
   }
 ];
 
+// Instagram home-feed posts, captured once from David's own feed on
+// 2026-09-19 with the Claude in Chrome extension and embedded here as a
+// one-time cache. Nothing is fetched at runtime; the app stays offline.
+// Ads, truncated captions, and anything personal (family, kids, health,
+// addresses, violence) were dropped by hand. Hashtags, @-signs, emoji and
+// photo credits are stripped so the RSVP stream is plain words. Each post
+// carries four true/false questions so feed runs are scored exactly like
+// the built-in passages: speed is never shown without comprehension.
+const FEED_CAPTURE_DATE = "2026-09-19";
+const FEED_POSTS = [
+  {
+    author: "1of1customusa",
+    url: "https://www.instagram.com/p/DdeUS4LvHxL/",
+    text: "Your sign to upgrade your earplugs Thanks to all of these beautiful people who visited our booth makingtimeisrad day 1. We are ready to transcend for the rest of this beautiful weekend. Come see us, chat with us, get molded, or check out our new filtered universal-fit earplugs to get you through the weekend",
+    questions: [
+      { q: "The post thanks people who visited a booth on day one.", a: true },
+      { q: "The company offers custom-molded earplugs.", a: true },
+      { q: "The new product is a pair of noise-cancelling headphones.", a: false },
+      { q: "The event ends today.", a: false },
+    ]
+  },
+  {
+    author: "faraway.kitchen",
+    url: "https://www.instagram.com/p/DdbwOtHFAj3/",
+    text: "I lied… I am here to convince you to go vegan if you’re new here, thanks for following along. This page isn’t just recipes. I’m always looking for the restaurants, products, places, and experiences that make vegan life a little more magical. Forever making plants the star of the show",
+    questions: [
+      { q: "The author says the page is only about recipes.", a: false },
+      { q: "The author is trying to convince readers to go vegan.", a: true },
+      { q: "The author looks for restaurants and products as well as recipes.", a: true },
+      { q: "The author says plants are a side dish on this page.", a: false },
+    ]
+  },
+  {
+    author: "earthlinged",
+    url: "https://www.instagram.com/p/Dc_nsAOjekj/",
+    text: "Dog meat is currently being phased out in South Korea and will officially be banned in February 2027, meaning that the breeding, slaughter and sale of dogs for food will soon be illegal in the country. The upcoming ban is a result of changing attitudes towards dogs in South Korea, which have led to changing attitudes towards dog meat. A government poll showed that in 2024 8% of respondents said they had eaten dog meat in the previous 12 months, which was down from 27% in 2015. While this is great news for dogs, it’s important that we continue to challenge the attitudes that exist towards pigs, cows, chickens, fish and the other animals we still needlessly kill for food. However, what’s happening in South Korea shows that established farming industries can be brought to an end.",
+    questions: [
+      { q: "South Korea's dog meat ban takes effect in February 2027.", a: true },
+      { q: "The poll showed dog meat consumption rose between 2015 and 2024.", a: false },
+      { q: "In 2024, 8% of respondents said they had eaten dog meat in the past year.", a: true },
+      { q: "The author says nothing more needs to change for other farmed animals.", a: false },
+    ]
+  },
+  {
+    author: "maggieeatsvegan",
+    url: "https://www.instagram.com/p/DdUUmDao_u_/",
+    text: "When I post about veganism and suddenly everyone has a medical condition that requires them to eat meat, can’t afford rice and beans, becomes deeply concerned about Indigenous communities, and starts mourning the insects harmed in crop production",
+    questions: [
+      { q: "The post is about reactions the author gets when posting about veganism.", a: true },
+      { q: "The author says people suddenly claim they cannot afford rice and beans.", a: true },
+      { q: "The author says everyone agrees with the posts.", a: false },
+      { q: "The post mentions concern about insects harmed in crop production.", a: true },
+    ]
+  },
+  {
+    author: "baddiebestiespod",
+    url: "https://www.instagram.com/p/DdSVxEeJI3n/",
+    text: "The Pause is pulling cierra.ortega for a chat Best known from Love Island USA Season 7, Cierra Ortega is stepping into an exciting new chapter and continuing to grow her platform across media, content, and culture. We’re excited to hear her perspective on visibility, confidence, new opportunities, and staying grounded as life keeps evolving. Come hear from Cierra at the ultimate girls’ day to pause, reset, reconnect, and pour back into YOU. Boston, MA | September 19th Your ticket helps support March of Dimes and its mission to improve the health of moms and babies. Comment CIERRA and we’ll send you the ticket link",
+    questions: [
+      { q: "Cierra Ortega is known from Love Island USA.", a: true },
+      { q: "The event takes place in Boston.", a: true },
+      { q: "The event is in December.", a: false },
+      { q: "Ticket sales support March of Dimes.", a: true },
+    ]
+  },
+  {
+    author: "professornoahfeldman",
+    url: "https://www.instagram.com/p/DdCymhezp7U/",
+    text: "I clerked with Justice Amy Coney Barrett back when she was just Amy Coney. Here’s what it taught me about her style as a Justice. This is Part 8 of my 9-part series on the current Supreme Court. Follow me to get caught up on Parts 1-7—and stay tuned for the grand finale.",
+    questions: [
+      { q: "The author clerked with Amy Coney Barrett.", a: true },
+      { q: "This post is the final part of the series.", a: false },
+      { q: "The series is about the current Supreme Court.", a: true },
+      { q: "The series has twelve parts.", a: false },
+    ]
+  },
+  {
+    author: "magfest",
+    url: "https://www.instagram.com/p/DdalMR-u2Rl/",
+    text: "Y'all. We did know we would sell out eventually but we did NOT know we would sell out in less than 12 hours. We are currently SOLD OUT of badges. Please stay tuned into our social media accounts and newsletters for any and all updates we may have. We just need some rest.",
+    questions: [
+      { q: "Badges sold out in less than 12 hours.", a: true },
+      { q: "The organizers expected to sell out this quickly.", a: false },
+      { q: "Badges are still available.", a: false },
+      { q: "The organizers ask people to watch social media and newsletters for updates.", a: true },
+    ]
+  },
+  {
+    author: "asideofsweet",
+    url: "https://www.instagram.com/p/DddBNBhvlc-/",
+    text: "Can you believe THIS HOME has been hiding in the Berkeley Hills?! Built in 1929, it was inspired by a French monastery. It has 8 bedrooms and 7.5 bathrooms including an attached guesthouse with full kitchen. The backyard has a koi pond, in ground hot tub, planter beds, a bocce court and a greenhouse. There is no enclosed garage but it has a large flat area for parking (or weddings ) and a two car-car port. Note: this home sold in 2025! Make sure you’re following for more incredible Bay Area home tours like this.",
+    questions: [
+      { q: "The home was built in 1929.", a: true },
+      { q: "It was inspired by a French monastery.", a: true },
+      { q: "It has an enclosed three-car garage.", a: false },
+      { q: "The home sold in 2025.", a: true },
+    ]
+  },
+  {
+    author: "chuckheaver",
+    url: "https://www.instagram.com/p/Dbhdj-uv_k5/",
+    text: "The Wiggle isn’t just a bike route. It’s an ancient creek bed the Yelamu Ohlone walked for 10,000 years — now a lazy, café-lined ride through the flattest path in the city. Follow it through the Panhandle, across Golden Gate Park (yes, there are bison ), and feel the temperature drop 20° as Karl the Fog takes over at Ocean Beach.",
+    questions: [
+      { q: "The Wiggle follows an ancient creek bed.", a: true },
+      { q: "The route is described as the steepest path in the city.", a: false },
+      { q: "There are bison in Golden Gate Park.", a: true },
+      { q: "The temperature rises 20 degrees at Ocean Beach.", a: false },
+    ]
+  },
+  {
+    author: "magfest",
+    url: "https://www.instagram.com/p/DdaaRhOMU4I/",
+    text: "We’re expected to potentially sell out of badges at some point throughout the night. I know, we’re as shocked as you guys are. Try to get your badge as soon as you can!",
+    questions: [
+      { q: "The post predicts badges could sell out during the night.", a: true },
+      { q: "The organizers say they expected this all along.", a: false },
+      { q: "Readers are urged to get badges soon.", a: true },
+      { q: "The post says badges will never sell out.", a: false },
+    ]
+  },
+  {
+    author: "travelrealizations",
+    url: "https://www.instagram.com/p/Ddbu2rpJab2/",
+    text: "Twelve Bay Area events this weekend, and 10 of them are completely free. September 18–20, save this for the weekend: Autumn Moon Festival: mooncakes + lion dancing on Grant Ave, Chinatown, Sat & Sun Haight Ashbury Street Fair: three music stages + crafts on Haight St, Sun Comedy Day: 50+ comedians in Golden Gate Park, Sun noon–5pm Flower Piano: final weekend, 12 pianos in the SF Botanical Garden, free for SF residents Lowrider Parade: 300+ cars down Mission St, parade at 1pm, Sat Muni Heritage Weekend: free rides on vintage streetcars, Embarcadero, both days Greek Food Festival: gyros + live dancing in the Mission, 75th year, Fri–Sun Fiesta on the Hill: Cortland Ave street party, Bernal Heights, Sun 10am–4pm Good Vibez Live: reggae at Discovery Meadow, San Jose, Sun (ticketed) South San José Village Fest: free family street fest, Sat 11am–4pm Double Happiness Celebration: lion dancing at History Park, San Jose, Sat 12–3:30pm Blues, Brews & BBQ: Washington Park, Alameda, Sun noon–6pm Full details on each in the graphic. Which one are you doing? Hi, I’m Chirasree! I help busy Bay Area families find meaningful, stress-free getaways and weekends close to home. Follow travelrealizations for weekly event roundups, local finds, and trip-planning tips.",
+    questions: [
+      { q: "Twelve events are listed, ten of them free.", a: true },
+      { q: "The Autumn Moon Festival is in Chinatown.", a: true },
+      { q: "Comedy Day is in Dolores Park.", a: false },
+      { q: "The Lowrider Parade is on Saturday.", a: true },
+    ]
+  },
+  {
+    author: "dr.matthewnagra",
+    url: "https://www.instagram.com/p/DdEwI2pFGbI/",
+    text: "I didn’t have the nypost deciding to cover our paper from over 2 months ago on my bingo card, but here we are… and I’ll take it! Of course, as is typical with media coverage of research, there are some things that were stretched a bit. For example, our review was on plant-forward diets (with emphasis on healthy plant foods, including carotenoid-rich plants, and reduced meat intake). The review wasn’t specifically on vegan diets (nor were most of the studies), but the trend toward more plants was clear. But then, I assume using “vegan” in the title draws more eyeballs. But overall, I’d say they did a pretty good job covering the findings and getting it out to the masses! PS. When David Goldman (the lead author) first brought up the idea for this review, I said that it could end up getting a lot of attention because of the whole “looksmaxxing” trend at the moment. When this NY Post article came out, he simply said “I guess you were right.”",
+    questions: [
+      { q: "The New York Post covered the author's paper.", a: true },
+      { q: "The review was specifically about vegan diets.", a: false },
+      { q: "The lead author was David Goldman.", a: true },
+      { q: "The author says the coverage was completely wrong.", a: false },
+    ]
+  },
+  {
+    author: "millenniumrestaurant",
+    url: "https://www.instagram.com/p/DdC0bWUJt1k/",
+    text: "Our covered & heated patio is waiting for (plant based) pizza lovers tonight! We’ll be open 5pm-8pm and have TWO new pizzas: potato-roasted eggplant & cherry tomato-saag See you tonight!",
+    questions: [
+      { q: "The restaurant is open 5pm to 8pm tonight.", a: true },
+      { q: "There are two new pizzas.", a: true },
+      { q: "One new pizza has potato and roasted eggplant.", a: true },
+      { q: "The patio is uncovered and unheated.", a: false },
+    ]
+  },
+  {
+    author: "henryonboard",
+    url: "https://www.instagram.com/p/Ddcq81SxOi5/",
+    text: "I have only one issue with Bart’s cable car: why does the fun driverless train have front seats facing backwards?",
+    questions: [
+      { q: "The author's issue is that some front seats face backwards.", a: true },
+      { q: "The train has a human driver.", a: false },
+      { q: "The post is about a BART cable car.", a: true },
+      { q: "The author lists many complaints about the train.", a: false },
+    ]
+  },
+  {
+    author: "sfchronicle",
+    url: "https://www.instagram.com/p/Ddaam3bKiBG/",
+    text: "Miles of pristine hills and valleys along California’s Central Coast have long been off-limits to the public to shield the state’s last remaining nuclear power plant. But not for much longer. A nonprofit land trust has struck a deal to acquire 2,060 acres of wildlands above Avila Beach in San Luis Obispo County and turn what has been part of a sprawling buffer for the oceanfront Diablo Canyon Power Plant into a nature preserve. The move shuts down a competing plan for high-end homes at the site and sets the stage for trails and campsites. On Thursday, the state agreed to finance the endeavor, giving the San Bernardino County-based Wildlands Conservancy the $42 million needed to proceed with the purchase of the area known as Wild Cherry Canyon. The land is owned by a subsidiary of PG&E, which operates the nearby nuclear facility. The acquisition money from the State Coastal Conservancy is one of the agency’s biggest-ever grants for conservation. “We’re excited about the opportunity to establish public access here,” said Tim Duff, project manager at the Coastal Conservancy. “This scenic access is what we call absolutely world class.” Read more via the link in our bio.",
+    questions: [
+      { q: "The land is near a nuclear power plant.", a: true },
+      { q: "The state agreed to provide $42 million.", a: true },
+      { q: "The deal clears the way for high-end homes.", a: false },
+      { q: "The land is currently owned by a PG&E subsidiary.", a: true },
+    ]
+  },
+  {
+    author: "the.world.in.maps",
+    url: "https://www.instagram.com/p/DddWvMjqcbG/",
+    text: "Half of the world’s economy is concentrated in just three relatively small regions The United States, the economic core of Western Europe, and the East Asian powerhouses of China, Japan and South Korea together generate roughly 50% of global GDP. Despite occupying only a small fraction of the world’s land, these areas remain the main centres of global economic output, finance, industry and technology.",
+    questions: [
+      { q: "Three regions generate about half of global GDP.", a: true },
+      { q: "The regions occupy most of the world's land.", a: false },
+      { q: "The regions include the United States and Western Europe.", a: true },
+      { q: "South Korea is excluded from the list.", a: false },
+    ]
+  },
+  {
+    author: "kqednews",
+    url: "https://www.instagram.com/p/DdckBsgvvdc/",
+    text: "We’ve all been there — running down the sidewalk as the Muni bus pulls to a stop just across the street. But recently, some San Francisco riders have complained that as they weigh whether to break a sweat trying to catch a ride, they aren’t able to tell what line they’re rushing toward. “When you’re picking up a bus on Market [Street], and 20 people are waiting for 5 different buses … ‘Which bus is this’ is the hot topic of conversation,” one Reddit user wrote. In August, buses’ front signs started to alternate displays of “Fare Required” with the usual line information and destination, which San Francisco Municipal Transit Agency spokesperson Erica Kato said is part of the agency’s “Fares For Our Future” campaign, aimed at increasing payment compliance as Muni weathers major funding shortfalls.",
+    questions: [
+      { q: "Bus signs started alternating with \"Fare Required\" in August.", a: true },
+      { q: "Riders complained they cannot tell which line a bus is.", a: true },
+      { q: "The campaign is called \"Free Rides Forever\".", a: false },
+      { q: "Muni is facing funding shortfalls.", a: true },
+    ]
+  },
+  {
+    author: "montereyherald",
+    url: "https://www.instagram.com/p/DdC9yFqCvbE/",
+    text: "The plan would introduce a temporary 6 month rail service between Oakland and San Luis Obispo, and if successful, may allow for a more permanent connection between northern and southern California. See more in link in bio",
+    questions: [
+      { q: "The rail service would run between Oakland and San Luis Obispo.", a: true },
+      { q: "The service would be permanent from the start.", a: false },
+      { q: "The trial would last six months.", a: true },
+      { q: "The service would connect California to Nevada.", a: false },
+    ]
+  },
+  {
+    author: "dr.matthewnagra",
+    url: "https://www.instagram.com/p/Dc34ZaNiUbT/",
+    text: "Plant-based diets are often criticized because certain nutrients are “less bioavailable.” But there’s an important piece of physiology that often gets overlooked: the human body can adapt. In our new review (lead by nutreconciencia), we examine how physiological adaptation may help explain why differences in nutrient intake or bioavailability don’t necessarily translate into differences in long-term health or function. We looked at evidence pertaining to several nutrients, including: Iron: Consuming a plant-based diet can result in adaptations that increase iron absorption and help maintain iron balance. Protein: The body can become more efficient at using and recycling amino acids. When total protein intake is adequate, long-term studies generally show that plant-based diets can preserve muscle mass and strength similarly to omnivorous diets. Creatine & carnosine: Although dietary intake is lower on plant-based diets, the body can synthesize these compounds itself, and the small amounts obtained from animal foods generally don’t translate to improved outcomes. Physiologic adaptations can partially be explained by changes in the gut microbiome: Regular exposure to dietary fibre and plant compounds can influence the gut microbiota and its ability to metabolize these compounds. Key takeaway: our bodies continuously adjust absorption, metabolism, synthesis, utilization, and recycling in response to what we eat. Of course, adaptation has limits. Adequate nutrition still matters, and certain nutrients (eg. vitamin B12) require particular attention on a plant-based diet. Health conditions, severe dietary insufficiency, and increased physiological demands can also overwhelm these adaptive mechanisms. So rather than asking “Does this diet provide as much of nutrient X?”, we should also ask: “What does the body do with what it receives?” That distinction is important when interpreting nutrition research, and especially when trying to understand the long-term effects of plant-based diets. Read our review:",
+    questions: [
+      { q: "The review argues the human body can adapt to plant-based diets.", a: true },
+      { q: "The body can increase iron absorption on a plant-based diet.", a: true },
+      { q: "The author says adaptation has no limits.", a: false },
+      { q: "Vitamin B12 needs particular attention on a plant-based diet.", a: true },
+    ]
+  },
+  {
+    author: "curious.connie",
+    url: "https://www.instagram.com/p/DdSH4eXy1M8/",
+    text: "late night teahouses are here in sf!! I just love a cozy connected evening and grateful for these spaces",
+    questions: [
+      { q: "Late-night teahouses are in San Francisco.", a: true },
+      { q: "The author dislikes cozy evenings.", a: false },
+      { q: "The author is grateful for these spaces.", a: true },
+      { q: "The post is about coffee shops in Oakland.", a: false },
+    ]
+  },
+];
+
 const rsvp = { running: false, runId: 0 };
 const TF_KEYS = { f: true, F: true, ArrowLeft: true, j: false, J: false, ArrowRight: false };
 
