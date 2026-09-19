@@ -53,6 +53,11 @@ function validate(passages) {
         die(`${where}: question ${j} must be {q: string, a: boolean}`);
       }
     });
+    // An uneven split makes a single blanket answer beat guessing.
+    const trueCount = p.questions.filter((q) => q.a).length;
+    if (trueCount !== QUESTIONS_PER_PASSAGE / 2) {
+      die(`${where}: expected ${QUESTIONS_PER_PASSAGE / 2} true answers, got ${trueCount}`);
+    }
   });
 
   const blob = JSON.stringify(passages);
