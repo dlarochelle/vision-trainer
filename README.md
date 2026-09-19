@@ -90,9 +90,54 @@ Only after the 2D trainer runs end to end.
 1. **WebXR.** A `VRButton` on the same page, inert without a device.
    Do not port the stimulus to three.js for this; see
    `docs/EVIDENCE.md` for why the 2D canvas is the better substrate.
-2. **Social feed as RSVP source.** Done for Instagram as a one-time
-   cached capture (see above), which keeps the no-network-call rule.
-   A live scraper (Apify or similar) remains out of scope for the demo.
+2. **Social feed as RSVP source.** Built for Instagram two ways, both
+   offline at demo time: a hand-curated capture of David's own home
+   feed embedded as `FEED_POSTS` (20 posts, questions written by hand),
+   and an Apify build-time snapshot of public accounts embedded as
+   `FEED_PASSAGES` (see "Feed passages" below). The RSVP feed source
+   shows both as one list.
+
+## Feed passages
+
+The RSVP passage list can optionally include a "My feed" group built
+from public Instagram captions. This is a **build-time snapshot**: two
+scripts fetch and embed the text, and the committed `index.html` then
+contains it as a string constant. The demo itself still makes no
+network calls, and it runs normally when no snapshot is present.
+
+The snapshot is optional. With none applied, `FEED_PASSAGES` is an
+empty array, the "My feed" group does not appear, and the four
+built-in passages behave exactly as before.
+
+```bash
+# 1. Fetch captions and generate questions.
+APIFY_TOKEN=... ANTHROPIC_API_KEY=... node tools/fetch_feed.mjs <username>
+
+# 2. Embed data/feed_passages.json into index.html.
+node tools/inline_feed.mjs
+
+# Reset to the empty default.
+node tools/inline_feed.mjs --clear
+```
+
+- `tools/fetch_feed.mjs` runs Apify's Instagram scraper for the given
+  public usernames, strips hashtags and mentions, keeps captions of 60
+  to 200 words, and asks Claude for four true/false questions per
+  caption. Captions whose questions fail validation are dropped. Output
+  is `data/feed_passages.json`, capped at 8 passages.
+  Pass `--captions-only` to skip question generation when no
+  `ANTHROPIC_API_KEY` is available; the questions must then be filled
+  in before the snapshot can be embedded.
+- `tools/inline_feed.mjs` rewrites the block between the
+  `FEED_PASSAGES_START` and `FEED_PASSAGES_END` markers in
+  `index.html`. It validates the shape of every passage and refuses to
+  embed anything matching a credential pattern.
+
+Environment variables are read from the shell only. Never put
+`APIFY_TOKEN` or `ANTHROPIC_API_KEY` in a file in this repository.
+
+Captions are quoted third-party text. Check that you have the right to
+redistribute the accounts you scrape before committing a snapshot.
 
 ## Documents here
 
