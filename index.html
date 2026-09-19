@@ -91,6 +91,7 @@
     border-radius: 5px; font-family: ui-monospace, monospace; font-size: 14px; background: #0e0e12;
   }
   footer {
+    position: sticky; bottom: 0; z-index: 10; background: var(--bg);
     border-top: 1px solid var(--line); padding: 12px 28px;
     font-size: 14px; color: var(--ink); line-height: 1.45;
   }
@@ -154,6 +155,9 @@
     <canvas id="csf" width="720" height="300"></canvas>
     <p class="note center">
       Threshold contrast per spatial frequency, plotted as sensitivity (1/threshold).
+      Display scale magnifies the stimulus, which lowers the angular frequency the
+      observer sees to the nominal value divided by the scale; points are plotted at
+      that effective frequency, so a 3&nbsp;c/deg block at 4&times; plots at 0.75&nbsp;c/deg.
       This is a demonstration of the paradigm at a small fraction of any studied
       training dose: published protocols run roughly 900&ndash;1,000 trials per session
       over 30&ndash;40 sessions; a block here is a few dozen trials.
@@ -573,7 +577,9 @@ function updateLive() {
   el("lvCon").textContent = s ? fmtC(s.contrast) : "—";
   for (const f of CSF_FREQUENCIES_CPD) {
     const r = sweep.results[f];
-    el("thr" + f).textContent = r ? fmtC(r.contrast) + (r.provisional ? " (provisional)" : "") : "—";
+    el("thr" + f).textContent = r
+      ? fmtC(r.contrast) + (r.scale > 1 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "") + (r.provisional ? " (provisional)" : "")
+      : "—";
   }
 }
 
@@ -607,6 +613,7 @@ async function runSweep() {
   blurControls();
   sweep.running = true; sweep.results = {};
   el("start").disabled = true; el("abort").disabled = false;
+  el("dist").disabled = true; el("scale").disabled = true;
   el("lvLast").textContent = "—";
   drawCSF();
 
@@ -614,10 +621,13 @@ async function runSweep() {
     const stair = new Staircase();
     sweep.block = cpd; sweep.stair = stair;
     updateLive();
+    // Geometry is snapshotted once per block so every trial in a staircase
+    // shares one rendered wavelength and separation. The distance and scale
+    // controls are disabled for the duration of the sweep.
+    const geo = updateGeometryReadout();
 
     while (!stair.done()) {
       if (runId !== my) return;
-      const geo = updateGeometryReadout();
       const targetInterval = Math.random() < 0.5 ? 1 : 2;
       // Spatial phase is fixed within the trial: both intervals use the same
       // phase, so nothing but the target's presence differs between them.
@@ -647,9 +657,13 @@ async function runSweep() {
       updateLive();
       drawBlank(correct ? "Correct" : "Incorrect", correct ? "rgb(30,110,60)" : "rgb(150,40,40)");
       await sleep(FEEDBACK_MS);
+      if (runId !== my) return;
     }
 
-    sweep.results[cpd] = stair.threshold();
+    // Magnifying the drawn stimulus lowers the angular spatial frequency the
+    // observer actually sees to cpd / scale. The threshold is recorded and
+    // plotted at that effective frequency, never at the nominal one.
+    sweep.results[cpd] = Object.assign(stair.threshold(), { cpdEffective: cpd / geo.scale, scale: geo.scale });
     updateLive();
     drawCSF();
   }
@@ -660,6 +674,7 @@ async function runSweep() {
 function finishSweep(msg) {
   sweep.running = false; sweep.block = null; sweep.stair = null;
   el("start").disabled = false; el("abort").disabled = true;
+  el("dist").disabled = false; el("scale").disabled = false;
   drawBlank(msg);
   updateLive();
 }
@@ -679,14 +694,14 @@ function drawCSF() {
   const c = csfCtx, W = csfCanvas.width, H = csfCanvas.height;
   const L = 70, R = 20, T = 20, B = 46;
   c.fillStyle = "#15151a"; c.fillRect(0, 0, W, H);
-  const fMin = 1, fMax = 30, sMin = 1, sMax = 200;
+  const fMin = 0.5, fMax = 30, sMin = 1, sMax = 200;
   const xOf = (f) => L + (Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin)) * (W - L - R);
   const yOf = (s) => T + (1 - (Math.log10(s) - Math.log10(sMin)) / (Math.log10(sMax) - Math.log10(sMin))) * (H - T - B);
 
   c.strokeStyle = "#2a2a33"; c.lineWidth = 1;
   c.fillStyle = "#9a9aa8"; c.font = "14px ui-sans-serif, system-ui, sans-serif";
   c.textAlign = "center"; c.textBaseline = "top";
-  for (const f of [1, 2, 3, 6, 12, 24]) {
+  for (const f of [0.5, 1, 2, 3, 6, 12, 24]) {
     c.beginPath(); c.moveTo(xOf(f), T); c.lineTo(xOf(f), H - B); c.stroke();
     c.fillText(String(f), xOf(f), H - B + 6);
   }
@@ -700,7 +715,8 @@ function drawCSF() {
   c.save(); c.translate(16, T + (H - T - B) / 2); c.rotate(-Math.PI / 2);
   c.textBaseline = "top"; c.fillText("sensitivity (1 / threshold)", 0, 0); c.restore();
 
-  const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f]).map((f) => ({ f, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }));
+  // Points sit at the effective (magnified) frequency, not the nominal block label.
+  const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f]).map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }));
   if (pts.length > 1) {
     c.strokeStyle = "#6ea8ff"; c.lineWidth = 3; c.beginPath();
     pts.forEach((p, i) => i ? c.lineTo(xOf(p.f), yOf(p.s)) : c.moveTo(xOf(p.f), yOf(p.s)));

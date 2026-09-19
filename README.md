@@ -40,7 +40,10 @@ Parameters, all named constants at the top of the script:
   derived px/degree shown (assumes 96 CSS px/inch). A separate display
   scale multiplier magnifies the drawn stimulus for projectors; the
   px/degree readout keeps the true unscaled value so magnification is
-  never disguised as angular size.
+  never disguised as angular size. Magnification lowers the angular
+  frequency the observer sees to nominal / scale, so each threshold is
+  recorded and plotted at that effective frequency (a 3 c/deg block at
+  4x plots at 0.75 c/deg).
 - RSVP default 250 wpm, warning above 350 (Di Nocera 2018, n=209).
   The UI states that this measures comprehension under RSVP and does
   not measure, and is not known to improve, natural reading (Rayner
