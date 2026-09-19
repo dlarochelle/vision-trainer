@@ -135,6 +135,10 @@ function cleanCaption(raw) {
     .replace(/#[\p{L}\p{N}_]+/gu, " ")
     .replace(/@[A-Za-z0-9_.]+/g, " ")
     .replace(/\s+/g, " ")
+    // Stripping @mentions can leave a dangling credit ("Photo by" with no
+    // name). Drop the fragment rather than show it mid-passage.
+    .replace(/\s*(?:Photos?|Video|Illustration)\s+by\s*$/i, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
