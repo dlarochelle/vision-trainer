@@ -1,10 +1,14 @@
 # Source bibliography
 
-The full 31-entry reference list, as distributed by Doctor Eye Health
-with the vision-improvement episode, 2026-06-18. Grouped here by the
+Two lists. First the original 31 entries as distributed by Doctor Eye
+Health with the vision-improvement episode, 2026-06-18, grouped by the
 clusters described in `EVIDENCE.md`; the source list was unordered.
+Then, at the end, the works surfaced by the adversarial research pass
+that the episode list omitted.
 
-## Perceptual learning (the basis of this build)
+## Original list, 31 entries
+
+### Perceptual learning (the basis of this build)
 
 - Hecht I, Yahalom C, Abaev O, Einan-Lifshitz A, Pras E, Erdinest N,
   Zmujack-Yehiam S. Efficacy of perceptual learning among patients with
@@ -18,7 +22,7 @@ clusters described in `EVIDENCE.md`; the source list was unordered.
 - RevitalVision studies and posters index.
   https://doctors.revitalvision.com/about/studies-posters/
 
-## Photobiomodulation and light therapy
+### Photobiomodulation and light therapy
 
 - Ash C, Dubec M, Donne K, Bashford T. Effect of wavelength and beam
   width on penetration in light-tissue interaction. Lasers Med Sci.
@@ -53,7 +57,7 @@ clusters described in `EVIDENCE.md`; the source list was unordered.
   Low-Level Light Therapy for Dry AMD. Ophthalmol Ther.
   2024;13(11):2855-2868. PMID 39271642.
 
-## Macular carotenoid supplementation
+### Macular carotenoid supplementation
 
 - Ma L, et al. Lutein, Zeaxanthin and Meso-zeaxanthin Supplementation
   Associated with Macular Pigment Optical Density. Nutrients.
@@ -102,3 +106,73 @@ clusters described in `EVIDENCE.md`; the source list was unordered.
   performance. Physiol Behav. 2019;211:112650. PMID 31425700.
 - Culver MF. Biomed J Sci Tech Res. 2018.
 - Johnson EJ. Am J Clin Nutr. 2012;96(5):1161S-1165S.
+
+## Added by the adversarial research pass
+
+Not from the episode bibliography. Surfaced by an independent
+adversarial review of the evidence base, and the reason the shared
+score was dropped and the claims section tightened. **These citations
+came back from a research tool and have not been checked against the
+primary sources.** Verify any of them before using it in public
+material.
+
+### Protocol design
+
+- Polat U, Ma-Naim T, Belkin M, Sagi D. Improving vision in adult
+  amblyopia by perceptual learning. PNAS. 2004. Non-randomized trial
+  with a patching control, 77 amblyopic observers aged 9-55. The
+  origin of the lateral-masking Gabor paradigm and the basis of
+  NeuroVision / RevitalVision. PMC2764839.
+- Polat U. Making perceptual learning practical to improve visual
+  functions. Vision Res. 2009. Review; the source for dose figures,
+  about 45 sessions and 22 hours.
+- Barollo M, et al. Gabor flanker training in amblyopia. Restor Neurol
+  Neurosci. 2017. Uncontrolled prospective study. Reports transfer to
+  untrained spatial frequencies and about 0.18 logMAR acuity gain.
+
+### Limits on transfer, and criticism
+
+- Levi DM, Li RW. Perceptual learning as a potential treatment for
+  amblyopia: a mini-review. Vision Res. 2009. PMID 19250947.
+  Improvements are strongest for the trained eye, task, stimulus and
+  orientation.
+- Dosher B, Lu ZL. Visual perceptual learning and models. Annu Rev Vis
+  Sci. 2017. PMC6691499. Specificity, and why gains are better
+  described as reduced internal noise than as a scalar speed factor.
+- Systematic review and meta-analysis of perceptual learning and video
+  game training in adults with monocular amblyopia. Ophthalmol Ther.
+  2025. 22 RCTs, 422 adults, SMD -0.68 for visual acuity.
+  PMID 40146483.
+
+### The reading bridge
+
+- Convergence Insufficiency Treatment Trial (CITT). Arch Ophthalmol.
+  2008. RCT, 221 children. Office-based therapy beats home-based and
+  placebo on convergence and symptoms.
+- CITT-ART. Optom Vis Sci. RCT, about 324 children. No benefit to
+  standardized reading comprehension over placebo therapy. Year needs
+  verification; see `EVIDENCE.md`.
+- Di Nocera F, et al. Rapid serial visual presentation and reading
+  comprehension. Int J Human Factors and Ergonomics. 2018.
+  Between-groups, n=209. Comprehension holds at 250-350 wpm, declines
+  at 400-450.
+
+### Research lines the episode list omitted
+
+Recorded for completeness. None of them change this build; the
+dichoptic line is the one with a bearing on the WebXR stretch goal.
+
+- Li J, et al. Dichoptic training improves contrast sensitivity in
+  adults with amblyopia. Vision Res. 2015.
+- Vedamurthy I, et al. A dichoptic custom-made action video game as a
+  treatment for adult amblyopia. Vision Res. 2015. 23 adults, 40
+  hours, versus 15 controls. PMID 25917239.
+- Li R, Polat U, Makous W, Bavelier D. Enhancing the contrast
+  sensitivity function through action video game training. Nat
+  Neurosci. 2009.
+- Li RW, et al. Video-game play induces plasticity in the visual
+  system of adults with amblyopia. PLoS Biol. 2011.
+- Temporal perceptual learning with flickering stimuli in amblyopia.
+  Sci Rep. 2023. 6 amblyopes, 6 controls, 5 sessions. Relevant to any
+  future "processing speed" framing, and notable for generalization at
+  a very low dose.
