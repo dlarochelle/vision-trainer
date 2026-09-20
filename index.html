@@ -456,7 +456,7 @@
     <div class="figure">
       <div class="figure-head">
         <h2>Score · contrast sensitivity function</h2>
-        <span class="note">sensitivity = 1 / threshold contrast</span>
+        <span class="note">sensitivity = 1 / threshold contrast &middot; hollow = unsettled</span>
       </div>
       <canvas id="csf" width="760" height="320"></canvas>
       <p class="note" style="margin-top:12px">
@@ -561,7 +561,7 @@
     </div>
 
     <div id="qBox" class="hidden" style="text-align:center">
-      <p class="note center" id="qCount"></p>
+      <p class="note center keep" id="qCount"></p>
       <p class="question" id="qText"></p>
       <div class="row" style="justify-content:center">
         <button class="btn" id="qTrue">True &nbsp;<kbd>F</kbd>/<kbd>&larr;</kbd></button>
@@ -724,6 +724,11 @@ const CUE_MARGIN_PX = 44;  // room kept at the top of the field for the interval
 // and it gives the surround time to ramp down to measurement luminance so the
 // eye is light-adapted to the field before the first threshold trial.
 const ARM_STEP_MS = 420;
+
+// How far the canvas's rendered size may drift from its backing store before
+// the geometry is reported as inexact. Two percent is below the point where
+// the change matters for the frequency the observer receives.
+const RENDER_RATIO_TOLERANCE = 0.02;
 
 /* ===========================================================================
    Viewing geometry
@@ -973,7 +978,10 @@ function updateLive() {
   for (const f of CSF_FREQUENCIES_CPD) {
     const r = sweep.results[f];
     el("thr" + f).textContent = r
-      ? fmtC(r.contrast) + (Math.abs(r.cpdEffective - f) > 0.01 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "") + (r.provisional ? " (provisional)" : "")
+      ? fmtC(r.contrast)
+        + (Math.abs(r.cpdEffective - f) > 0.01 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "")
+        + (r.provisional ? " (provisional)" : "")
+        + (r.ratioDrift ? " (window resized mid-block)" : "")
       : "—";
   }
 }
@@ -983,7 +991,7 @@ function updateGeometryReadout() {
   el("scaleV").textContent = geo.requested.toFixed(1) + "×";
   el("ppd").textContent = geo.ppd.toFixed(1) + " px/deg";
   el("scaleUsed").textContent = geo.scale.toFixed(1) + "×" + (geo.clamped ? " (clamped to fit)" : "");
-  const exact = Math.abs(geo.renderRatio - 1) < 0.02;
+  const exact = Math.abs(geo.renderRatio - 1) < RENDER_RATIO_TOLERANCE;
   el("renderRatio").textContent = exact ? "1:1 (exact)" : geo.renderRatio.toFixed(2) + "× of backing store";
   el("renderRatio").style.color = exact ? "" : "var(--warn)";
   document.body.dataset.renderExact = exact ? "true" : "false";
@@ -1013,7 +1021,16 @@ const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 function isGaborMode() { return !el("modeGabor").classList.contains("hidden"); }
 
+// A pending return to idle, so a sweep that just finished cannot restore the
+// page's decoration in the middle of whatever the observer started next.
+let idleTimer = 0;
+function scheduleIdle(ms) {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { idleTimer = 0; setPhase("idle"); }, ms);
+}
+
 function setPhase(phase) {
+  clearTimeout(idleTimer); idleTimer = 0;
   document.body.dataset.phase = phase;
   if (phase === "idle") startAmbient(); else stopAmbient();
   updateFieldCaption();
@@ -1071,22 +1088,30 @@ function ambientFrame(ts) {
   renderField(ctx, canvas, ambientPatches(ts));
 }
 
+// The mode check comes first and stops a loop that is already running:
+// entering RSVP mode must not leave this animating against a hidden canvas.
 function startAmbient() {
-  if (ambientRaf || !isGaborMode()) return;
-  if (REDUCED_MOTION.matches || document.hidden) { drawStaticIdle(); return; }
+  if (!isGaborMode()) { stopAmbient(); return; }
+  if (REDUCED_MOTION.matches || document.hidden) { stopAmbient(); drawStaticIdle(); return; }
+  if (ambientRaf) return;
   ambientRaf = requestAnimationFrame(ambientFrame);
+  updateFieldCaption();
 }
 function stopAmbient() {
   if (ambientRaf) { cancelAnimationFrame(ambientRaf); ambientRaf = 0; }
+  updateFieldCaption();
 }
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopAmbient();
   else if (document.body.dataset.phase === "idle") startAmbient();
 });
+// Re-entering startAmbient picks the right branch for the new setting, and
+// each branch leaves the caption describing what is actually on the canvas.
 REDUCED_MOTION.addEventListener("change", () => {
+  if (document.body.dataset.phase !== "idle") return;
   stopAmbient();
-  if (document.body.dataset.phase === "idle") { startAmbient(); drawStaticIdle(); }
+  startAmbient();
 });
 
 function drawStaticIdle(geo) {
@@ -1133,9 +1158,15 @@ async function runSweep() {
     // shares one rendered wavelength and separation. The distance and scale
     // controls are disabled for the duration of the sweep.
     const geo = updateGeometryReadout();
+    // The effective frequency is computed from the canvas downscale captured
+    // here, but the window can be resized mid-block and no single value would
+    // then be right for the whole staircase. Watch for that and mark the
+    // threshold rather than filing a number that quietly does not apply.
+    let ratioDrift = false;
 
     while (!stair.done()) {
       if (runId !== my) return;
+      if (Math.abs(renderRatio() - geo.renderRatio) > RENDER_RATIO_TOLERANCE) ratioDrift = true;
       const targetInterval = Math.random() < 0.5 ? 1 : 2;
       // Spatial phase is fixed within the trial: both intervals use the same
       // phase, so nothing but the target's presence differs between them.
@@ -1174,7 +1205,8 @@ async function runSweep() {
     // Effective angular frequency = nominal / (display scale x canvas downscale).
     // Both magnifications are folded in; neither is disguised as angular size.
     sweep.results[cpd] = Object.assign(stair.threshold(), {
-      cpdEffective: cpd / (geo.scale * geo.renderRatio), scale: geo.scale, renderRatio: geo.renderRatio
+      cpdEffective: cpd / (geo.scale * geo.renderRatio),
+      scale: geo.scale, renderRatio: geo.renderRatio, ratioDrift
     });
     updateLive();
     drawCSF();
@@ -1190,8 +1222,9 @@ function finishSweep(msg) {
   drawBlank(msg);
   updateLive();
   // Hold the finished message briefly before the idle field resumes, so the
-  // result is readable rather than immediately painted over.
-  setTimeout(() => { if (!sweep.running) setPhase("idle"); }, 1400);
+  // result is readable rather than immediately painted over. Any later phase
+  // change cancels this, so it cannot fire into a run that started meanwhile.
+  scheduleIdle(1400);
 }
 
 function abortSweep() {
@@ -1264,7 +1297,8 @@ function drawCSF() {
 
   // Points sit at the effective (magnified) frequency, not the nominal block label.
   const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f])
-    .map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }))
+    .map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast,
+                   p: sweep.results[f].provisional || sweep.results[f].ratioDrift }))
     .sort((a, b) => a.f - b.f);
 
   if (pts.length > 1) {
@@ -1287,8 +1321,9 @@ function drawCSF() {
 
   for (const pt of pts) {
     const x = xOf(pt.f), y = yOf(pt.s), col = pt.p ? warn : accent;
-    // Provisional estimates are drawn hollow: the block hit its trial cap
-    // before the staircase converged, so the point is not a settled threshold.
+    // Hollow means the point is not a settled threshold: either the block hit
+    // its trial cap before the staircase converged, or the window was resized
+    // mid-block so the effective frequency does not hold across the staircase.
     c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2);
     if (pt.p) { c.fillStyle = cssVar("--panel", "#11141c"); c.fill(); c.strokeStyle = col; c.lineWidth = 2; c.stroke(); }
     else { c.fillStyle = col; c.fill(); }
@@ -1310,7 +1345,27 @@ function drawCSF() {
 
 el("start").addEventListener("click", () => { if (!sweep.running) runSweep(); });
 el("abort").addEventListener("click", abortSweep);
-["dist", "scale"].forEach((id) => el(id).addEventListener("input", () => { if (sweep.running) updateGeometryReadout(); else drawIdle(); }));
+// Adjusting the geometry controls suspends the decorative field and draws the
+// actual stimulus at the chosen magnification, so the controls give the
+// feedback a presenter is setting them by. The lattice resumes once the
+// controls have been quiet for a moment.
+const GEOMETRY_PREVIEW_HOLD_MS = 1800;
+let geometryPreviewTimer = 0;
+
+function previewGeometry() {
+  const geo = updateGeometryReadout();
+  stopAmbient();
+  drawStaticIdle(geo);
+  clearTimeout(geometryPreviewTimer);
+  geometryPreviewTimer = setTimeout(() => {
+    geometryPreviewTimer = 0;
+    if (document.body.dataset.phase === "idle") startAmbient();
+  }, GEOMETRY_PREVIEW_HOLD_MS);
+}
+
+["dist", "scale"].forEach((id) => el(id).addEventListener("input", () => {
+  if (sweep.running) updateGeometryReadout(); else previewGeometry();
+}));
 
 /* ===========================================================================
    Mode 2: RSVP reading with comprehension questions
@@ -1952,12 +2007,9 @@ el("tabRsvp").addEventListener("click", () => showMode("rsvp"));
 // 720 px backing store, which changes the angular frequency the observer
 // receives. Re-read it on every layout change rather than at load only.
 if (window.ResizeObserver) {
-  new ResizeObserver(() => {
-    if (!sweep.running) updateGeometryReadout();
-    fitCSF();
-  }).observe(document.body);
+  new ResizeObserver(() => { updateGeometryReadout(); fitCSF(); }).observe(document.body);
 } else {
-  window.addEventListener("resize", () => { if (!sweep.running) updateGeometryReadout(); fitCSF(); });
+  window.addEventListener("resize", () => { updateGeometryReadout(); fitCSF(); });
 }
 
 updateLive();
