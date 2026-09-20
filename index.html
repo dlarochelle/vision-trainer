@@ -464,20 +464,26 @@
     margin-top: 10px;
   }
   /* The mapping is instruction text for an input method a phone does not have,
-     so it is shown only where a keyboard is plausible. The test is the pointer,
-     not the viewport: a laptop in a narrow window is below the focus-mode
-     breakpoint and still answers with F and J, so gating on width as well would
-     take the hint away from the keyboard it describes. A coarse pointer is the
-     signal that there is no keyboard to describe. It carries its own
-     `margin-right: auto` rather than the row using `space-between`, so when the
-     hint is absent Stop stays at the end of the row instead of sliding to the
-     start. */
+     so a coarse pointer -- a finger on a touchscreen -- is what takes it away.
+     The test is the pointer, not the viewport: a laptop in a narrow window is
+     below the focus-mode breakpoint and still answers with F and J.
+
+     Stated as "hide on coarse" rather than "show on fine" so it fails toward
+     showing the hint. `pointer: none` matches neither, and a keyboard-only
+     desktop or a TV browser is exactly the case with nothing but the keys this
+     line describes; a browser too old for the pointer feature lands there too.
+     The hint costs a line of text where it is not needed and costs the whole
+     input method where it is.
+
+     It carries its own `margin-right: auto` rather than the row using
+     `space-between`, so when the hint is absent Stop stays at the end of the
+     row instead of sliding to the start. */
   .resp-hint {
-    display: none; margin-right: auto;
+    margin-right: auto;
     font-family: var(--mono); font-size: 11px; color: var(--dimmer); letter-spacing: .06em;
   }
-  @media (pointer: fine) {
-    .resp-hint { display: inline; }
+  @media (pointer: coarse) {
+    .resp-hint { display: none; }
   }
   .resp-stop {
     background: none; border: 0; color: var(--dim); cursor: pointer;
