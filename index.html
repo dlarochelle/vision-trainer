@@ -4,138 +4,425 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vision Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
+  /* =========================================================================
+     THEME NOTE — deliberately single-theme (dark).
+
+     This is not an omission. Surround luminance is a variable in a contrast-
+     detection task: a light page would raise the adapting luminance around a
+     mid-gray stimulus field and change the thresholds being measured. The
+     page therefore commits to a dark world and paints every colour and
+     background explicitly, so it holds on any host ground.
+     ====================================================================== */
   :root {
-    --bg: #0a0a0c;
-    --panel: #15151a;
-    --line: #2a2a33;
-    --ink: #e8e8ee;
-    --dim: #9a9aa8;
-    --accent: #6ea8ff;
-    --warn: #ffb454;
-    --good: #5fd18a;
-    --bad: #ff6b6b;
-    /* Mid-gray matching the canvas background, so the stimulus field
-       does not sit in a bright surround. */
-    --field: #808080;
+    /* Neutrals are biased slightly toward the accent's blue, so the greys
+       read as chosen rather than inherited. */
+    --void:      #07090e;
+    --void-2:    #0b0e15;
+    --panel:     #11141c;
+    --panel-2:   #171b25;
+    --line:      #222839;
+    --line-soft: #1a1f2c;
+    --ink:       #e6e9f2;
+    --dim:       #8b93a8;
+    --dimmer:    #5d6577;
+    --accent:    #6ea8ff;
+    --accent-lo: #2f4f80;
+    --warn:      #ffb454;
+    --good:      #5fd18a;
+    --bad:       #ff6b6b;
+
+    /* Immutable: matches the canvas mean luminance so the stimulus field
+       never sits in a bright surround. Not a design token — a constant. */
+    --field:     #808080;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --gutter: 24px;
   }
+
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg); color: var(--ink);
-    font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
-    font-size: 17px; line-height: 1.5;
+
+  html { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
   }
-  body { display: flex; flex-direction: column; min-height: 100vh; }
-  header {
-    display: flex; align-items: baseline; gap: 24px;
-    padding: 14px 28px; border-bottom: 1px solid var(--line);
+
+  /* Ambient page wash. Purely decorative: quarantined during measurement. */
+  .wash {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 600px at 18% -10%, rgba(110,168,255,.10), transparent 70%),
+      radial-gradient(700px 500px at 100% 0%, rgba(110,168,255,.05), transparent 70%);
+    opacity: 1;
+    transition: opacity .9s ease;
   }
-  h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: .01em; }
-  .modes { display: flex; gap: 8px; margin-left: auto; }
+
+  /* ---------------------------------------------------------------- masthead */
+  .masthead {
+    position: relative; z-index: 2;
+    display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap;
+    padding: 22px var(--gutter) 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--void-2), var(--void));
+  }
+  .wordmark { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--dimmer);
+  }
+  h1 {
+    margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.015em;
+    line-height: 1.1; text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  .tagline {
+    margin: 4px 0 0; color: var(--dim); font-size: 14px; max-width: 54ch;
+  }
+
+  .modes { display: flex; gap: 6px; }
   .modes button {
-    background: var(--panel); color: var(--dim);
-    border: 1px solid var(--line); border-radius: 7px;
-    padding: 7px 16px; font-size: 16px; font-family: inherit; cursor: pointer;
+    background: transparent; color: var(--dim);
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    padding: 8px 15px; font-size: 14px; font-family: var(--sans); font-weight: 500;
+    cursor: pointer; transition: color .18s ease, border-color .18s ease, background .18s ease;
   }
-  .modes button[aria-selected="true"] { color: var(--ink); border-color: var(--accent); }
-  main { flex: 1; display: flex; gap: 28px; padding: 24px 28px; align-items: flex-start; }
-  .stage {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; min-width: 0;
+  .modes button:hover { color: var(--ink); border-color: var(--accent-lo); }
+  .modes button[aria-selected="true"] {
+    color: var(--void); background: var(--accent); border-color: var(--accent); font-weight: 600;
+  }
+
+  /* ------------------------------------------------------------------ layout */
+  main {
+    position: relative; z-index: 1;
+    flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 28px; padding: 26px var(--gutter) 34px; align-items: start;
+  }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; min-width: 0; }
+  .rail {
+    display: flex; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+    padding: 20px; position: sticky; top: 18px;
+  }
+
+  /* ------------------------------------------------------- the stimulus field */
+  .field-frame {
+    position: relative; border-radius: var(--r-md); padding: 10px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    transition: background .8s ease, border-color .8s ease, padding .8s ease, box-shadow .8s ease;
+    max-width: 100%;
   }
   canvas#stim {
-    background: var(--field);
-    border-radius: 4px;
+    display: block; background: var(--field); border-radius: var(--r-sm);
     image-rendering: pixelated;
-    max-width: 100%; max-height: 72vh; width: auto; height: auto;
+    max-width: 100%; height: auto;
   }
-  canvas#csf { max-width: 100%; }
-  aside {
-    width: 350px; flex: none;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-    padding: 18px 20px;
+  /* Shown when the canvas is not rendering 1:1, because CSS downscaling
+     silently raises the angular spatial frequency the observer receives. */
+  .scale-flag {
+    display: none; position: absolute; left: 10px; bottom: 10px; z-index: 3;
+    background: rgba(12,15,22,.92); color: var(--warn);
+    border: 1px solid var(--warn); border-radius: var(--r-sm);
+    padding: 5px 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
   }
-  aside h2, .stage h2 {
-    font-size: 13px; text-transform: uppercase; letter-spacing: .09em;
-    color: var(--dim); margin: 0 0 14px; font-weight: 600;
+  body[data-render-exact="false"] .scale-flag { display: block; }
+
+  /* ------------------------------------------------------------------ figures */
+  .figure {
+    width: 100%; max-width: 760px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+    padding: 18px 20px 14px;
   }
-  .ctl { margin-bottom: 15px; }
-  .ctl label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 5px; }
-  .ctl label span:last-child { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .figure-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+  h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .16em;
+    color: var(--dim); margin: 0; font-weight: 600; font-family: var(--mono);
+  }
+  canvas#csf { display: block; width: 100%; height: auto; }
+
+  /* ----------------------------------------------------------------- controls */
+  .rail h2 + * { margin-top: 0; }
+  .rail section + section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+  .ctl { margin-bottom: 14px; }
+  .ctl:last-child { margin-bottom: 0; }
+  .ctl label { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; margin-bottom: 6px; }
+  .ctl label span:last-child { color: var(--accent); font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .ctl input[type=range] { width: 100%; accent-color: var(--accent); }
   .ctl input[type=number], .ctl select {
-    width: 90px; background: #0e0e12; color: var(--ink);
-    border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px;
-    font-family: inherit; font-size: 15px;
+    background: var(--void-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 9px;
+    font-family: var(--mono); font-size: 14px;
   }
+  .ctl input[type=number] { width: 88px; }
   .ctl select { width: 100%; }
-  .derived {
-    border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px;
-    font-size: 14px; color: var(--dim);
-  }
-  .derived div { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .derived b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .live { margin-top: 16px; font-size: 15px; }
-  .live div { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .live b { color: var(--ink); font-variant-numeric: tabular-nums; }
-  .live .big { font-size: 30px; font-weight: 700; color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   .btn {
-    background: var(--accent); color: #06101f; border: 0; border-radius: 7px;
-    padding: 10px 18px; font-size: 17px; font-weight: 650; font-family: inherit; cursor: pointer;
+    background: var(--accent); color: #061020; border: 1px solid var(--accent);
+    border-radius: var(--r-sm); padding: 10px 18px;
+    font-size: 15px; font-weight: 600; font-family: var(--sans); cursor: pointer;
+    transition: filter .16s ease, box-shadow .16s ease, transform .16s ease;
   }
-  .btn.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
-  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.secondary:hover:not(:disabled) { border-color: var(--accent-lo); }
+  .btn:disabled { opacity: .38; cursor: default; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
   kbd {
-    display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-bottom-width: 2px;
-    border-radius: 5px; font-family: ui-monospace, monospace; font-size: 14px; background: #0e0e12;
+    display: inline-block; padding: 1px 6px; border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 4px;
+    font-family: var(--mono); font-size: 12px; background: var(--void-2); color: var(--dim);
   }
-  footer {
-    position: sticky; bottom: 0; z-index: 10; background: var(--bg);
-    border-top: 1px solid var(--line); padding: 12px 28px;
-    font-size: 14px; color: var(--ink); line-height: 1.45;
+
+  /* ----------------------------------------------------------------- readouts */
+  .readout { display: flex; flex-direction: column; gap: 5px; }
+  .readout div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .readout span { color: var(--dim); }
+  .readout b { color: var(--ink); font-weight: 500; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .readout.fine { font-size: 13px; }
+  .readout.fine b, .readout.fine span { font-size: 13px; }
+
+  /* The one big number on the page: the live contrast being presented. */
+  .hero-metric {
+    margin: 14px 0; padding: 14px 16px;
+    background: var(--void-2); border: 1px solid var(--line); border-radius: var(--r-md);
+    display: flex; flex-direction: column; gap: 2px;
   }
-  .note { font-size: 14px; color: var(--dim); max-width: 70ch; }
+  .hero-metric .l {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--dimmer);
+  }
+  .hero-metric .v {
+    font-family: var(--mono); font-size: 34px; font-weight: 500; line-height: 1.1;
+    color: var(--accent); font-variant-numeric: tabular-nums;
+  }
+  /* Before a sweep there is no value: show the placeholder as a placeholder
+     rather than as a full-size accent-coloured dash. */
+  .hero-metric .v[data-idle="true"] { color: var(--dimmer); font-size: 24px; }
+
+  table.thr { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.thr td { padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+  table.thr tr:last-child td { border-bottom: 0; }
+  table.thr td:first-child { color: var(--dim); }
+  table.thr td:last-child {
+    text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums;
+    color: var(--ink); font-weight: 500;
+  }
+  table.runs { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.runs th {
+    text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--dimmer); font-weight: 500;
+    padding: 0 6px 7px 0; border-bottom: 1px solid var(--line);
+  }
+  table.runs td { padding: 7px 6px 7px 0; border-bottom: 1px solid var(--line-soft); }
+  table.runs td:nth-child(3), table.runs td:nth-child(4) {
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+
+  /* -------------------------------------------------------------------- prose */
+  .note { font-size: 13px; color: var(--dim); max-width: 68ch; margin: 0; }
   .note.center { text-align: center; }
+  .note b { color: var(--ink); font-weight: 600; }
   .warn { color: var(--warn); }
   .hidden { display: none !important; }
-  .framing {
-    border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px;
-    color: var(--ink); font-size: 15px; max-width: 78ch; background: #1a1610;
-  }
-  table.thr { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 8px; }
-  table.thr td { padding: 3px 0; border-bottom: 1px solid var(--line); }
-  table.thr td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
 
-  /* RSVP */
+  /* A standing caveat, not an alert. Bordered on one edge so it reads as an
+     annotation rather than one more card. */
+  .framing {
+    border-left: 2px solid var(--warn); padding: 2px 0 2px 16px;
+    color: var(--dim); font-size: 13.5px; max-width: 76ch; background: none;
+  }
+  .framing b, .framing i { color: var(--ink); }
+
+  /* ------------------------------------------------------------------- RSVP */
   .rsvp-field {
-    width: 100%; max-width: 900px; height: 240px; background: var(--panel);
-    border: 1px solid var(--line); border-radius: 10px;
+    width: 100%; max-width: 860px; height: 260px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-lg);
     display: flex; align-items: center; justify-content: center; position: relative;
+    transition: background .8s ease, border-color .8s ease, box-shadow .8s ease;
   }
   .rsvp-word {
-    font-size: 72px; font-weight: 600; letter-spacing: .01em; font-variant-ligatures: none;
+    font-size: clamp(38px, 7vw, 76px); font-weight: 500; letter-spacing: -.01em;
+    font-variant-ligatures: none; text-align: center; padding: 0 16px;
   }
   .rsvp-field .mark {
     position: absolute; left: 50%; width: 2px; background: var(--line);
+    transform: translateX(-50%);
   }
-  .question { font-size: 26px; max-width: 70ch; text-align: center; }
-  .score { display: flex; gap: 40px; justify-content: center; margin-top: 6px; }
-  .score div { text-align: center; }
-  .score .v { font-size: 44px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .score .l { font-size: 14px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
-  .runs { font-size: 15px; width: 100%; border-collapse: collapse; }
-  .runs td, .runs th { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: right; }
-  .runs th { color: var(--dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
-  .runs td:first-child, .runs th:first-child { text-align: left; }
+  .question { font-size: 21px; font-weight: 500; max-width: 60ch; margin: 0 auto 16px; text-wrap: balance; }
+  .score {
+    display: flex; gap: 40px; justify-content: center; margin: 14px 0 12px;
+  }
+  .score .v {
+    font-family: var(--mono); font-size: 44px; font-weight: 500; line-height: 1;
+    color: var(--accent); font-variant-numeric: tabular-nums;
+  }
+  .score .l {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--dimmer); margin-top: 6px;
+  }
+
+  /* ------------------------------------------------------------------ footer */
+  footer {
+    position: sticky; bottom: 0; z-index: 10;
+    background: var(--void-2); border-top: 1px solid var(--line);
+    padding: 14px var(--gutter);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    font-size: 12.5px; color: var(--dim); line-height: 1.5;
+  }
+  footer b { color: var(--ink); font-weight: 600; }
+
+  /* =========================================================================
+     MEASUREMENT QUARANTINE
+
+     The app has three phases, carried on body[data-phase]:
+       idle      — full visual expression
+       arming    — the surround ramps down to measurement luminance
+       measuring — nothing moves, nothing glows, nothing competes
+
+     Everything decorative is bound to these rules rather than being switched
+     off case by case in JS, so no future code path can forget to do it.
+     ====================================================================== */
+  body[data-phase="arming"] .wash,
+  body[data-phase="measuring"] .wash { opacity: 0; }
+
+  body[data-phase="arming"],
+  body[data-phase="measuring"] { background: var(--void); }
+
+  body[data-phase="arming"] .masthead,
+  body[data-phase="measuring"] .masthead,
+  body[data-phase="arming"] .rail,
+  body[data-phase="measuring"] .rail {
+    filter: saturate(.25);
+    transition: filter .8s ease, opacity .8s ease;
+  }
+  body[data-phase="arming"] .rail,
+  body[data-phase="measuring"] .rail { opacity: .5; }
+  body[data-phase="arming"] .masthead,
+  body[data-phase="measuring"] .masthead { opacity: .45; }
+
+  /* The frame dissolves so the stimulus sits in an unbroken surround. */
+  body[data-phase="arming"] .field-frame,
+  body[data-phase="measuring"] .field-frame,
+  body[data-phase="arming"] .rsvp-field,
+  body[data-phase="measuring"] .rsvp-field {
+    background: transparent; border-color: transparent; box-shadow: none;
+  }
+  body[data-phase="measuring"] .figure,
+  body[data-phase="measuring"] .framing,
+  body[data-phase="measuring"] .note:not(.keep) { opacity: .28; }
+
+  /* Hard stop. Nothing animates while a threshold is being measured. */
+  body[data-phase="measuring"] *,
+  body[data-phase="measuring"] *::before,
+  body[data-phase="measuring"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* The disclaimer is never dimmed, never animated, never moved. */
+  footer, body[data-phase="measuring"] footer { opacity: 1 !important; filter: none !important; }
+
+  /* =========================================================================
+     DISPLAY TREATMENT — the stimulus itself is the hero.
+
+     The boldness is spent in two places and nowhere else: the display-serif
+     masthead, and the glow under the stimulus frame. Everything around them
+     stays quiet, and all of it is quarantined once measurement starts.
+     ====================================================================== */
+  h1 {
+    font-family: var(--display); font-size: clamp(34px, 5.2vw, 52px);
+    font-weight: 400; letter-spacing: -.01em;
+  }
+  h1 em { font-style: italic; }
+  .field-frame {
+    padding: 18px; box-shadow: 0 0 0 1px rgba(110,168,255,.12), 0 30px 90px -40px rgba(110,168,255,.45);
+  }
+  .rsvp-field {
+    box-shadow: 0 0 0 1px rgba(110,168,255,.12), 0 30px 90px -40px rgba(110,168,255,.45);
+  }
+  body[data-phase="idle"] .btn:not(.secondary):not(:disabled) {
+    box-shadow: 0 0 24px -6px rgba(110,168,255,.7);
+  }
+  .hero-metric .v { font-size: 40px; }
+  .hero-metric .v[data-idle="true"] { font-size: 24px; }
+  body[data-phase="idle"] .field-frame::after {
+    content: ""; position: absolute; inset: 18px; border-radius: var(--r-sm);
+    pointer-events: none;
+    background: radial-gradient(closest-side, transparent 55%, rgba(7,9,14,.55) 100%);
+  }
+
+  /* Entrance: from a visible resting state, so the first frame is readable. */
+  @keyframes rise { from { opacity: .001; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  body[data-phase="idle"] .stage > *,
+  body[data-phase="idle"] .rail {
+    animation: rise .6s cubic-bezier(.2,.7,.3,1) both;
+  }
+  .stage > *:nth-child(2) { animation-delay: .06s; }
+  .stage > *:nth-child(3) { animation-delay: .12s; }
+  .rail { animation-delay: .1s; }
+
+  /* --------------------------------------------------------------- responsive */
+  @media (max-width: 1040px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+    .rail { position: static; }
+  }
+  @media (max-width: 640px) {
+    :root { --gutter: 16px; }
+    .masthead { padding-block: 16px 14px; gap: 14px; }
+    .modes { width: 100%; }
+    .modes button { flex: 1; padding: 9px 8px; font-size: 13px; }
+    .score { gap: 26px; }
+    .rsvp-field { height: 200px; }
+  }
+
+  /* ---------------------------------------------------------- reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+  }
 </style>
 </head>
-<body>
+<body data-phase="idle">
 
-<header>
-  <h1>Vision Trainer</h1>
-  <div class="modes" role="tablist">
-    <button role="tab" id="tabGabor" aria-selected="true">Contrast detection (Gabor)</button>
+<div class="wash" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div class="wordmark">
+    <span class="eyebrow">Perceptual learning · experimental</span>
+    <h1>See better. <em>Read faster.</em></h1>
+    <p class="tagline">
+      The goal is better vision and faster reading. We are testing whether it works;
+      more testing is needed. Two measurements: contrast sensitivity under lateral
+      masking, and comprehension under rapid serial presentation.
+    </p>
+  </div>
+
+  <div class="modes" role="tablist" style="margin-left:auto">
+    <button role="tab" id="tabGabor" aria-selected="true">Contrast detection</button>
     <button role="tab" id="tabRsvp" aria-selected="false">RSVP reading</button>
   </div>
 </header>
@@ -143,8 +430,13 @@
 <!-- =============================== MODE 1 =============================== -->
 <main id="modeGabor">
   <div class="stage">
-    <canvas id="stim" width="720" height="720"></canvas>
-    <p class="note center" id="note">
+    <div class="field-frame">
+      <canvas id="stim" width="600" height="600"></canvas>
+      <div class="scale-flag" id="scaleFlag">display scaled</div>
+    </div>
+    <p class="note center keep" id="fieldCaption"></p>
+
+    <p class="note center keep" id="note">
       <b>What to look for.</b> Each trial shows two flashes in a row, labelled
       <b>1</b> and <b>2</b> in the corner. Both flashes show the same two high-contrast
       striped patches, one above centre and one below centre &mdash; ignore those, they
@@ -161,78 +453,98 @@
       Stop if you get a headache, eye strain, or double vision.
     </p>
 
-    <h2 style="margin-top:8px">Score: contrast sensitivity function</h2>
-    <canvas id="csf" width="720" height="300"></canvas>
-    <p class="note center">
-      Threshold contrast per spatial frequency, plotted as sensitivity (1/threshold).
-      Display scale magnifies the stimulus, which lowers the angular frequency the
-      observer sees to the nominal value divided by the scale; points are plotted at
-      that effective frequency, so a 3&nbsp;c/deg block at 4&times; plots at 0.75&nbsp;c/deg.
-      This is a demonstration of the paradigm at a small fraction of any studied
-      training dose: published protocols run roughly 900&ndash;1,000 trials per session
-      over 30&ndash;40 sessions; a block here is a few dozen trials.
-    </p>
-    <p class="note center">
-      Deviation from the published protocols, stated plainly: they do not sweep fixed
-      spatial frequencies (Polat starts low and advances adaptively; Zhou et al. train at
-      the individual's cutoff frequency). This app sweeps 3 / 6 / 12 c/deg because it is
-      measuring a contrast sensitivity function, not replicating a training protocol.
-    </p>
+    <div class="figure">
+      <div class="figure-head">
+        <h2>Score · contrast sensitivity function</h2>
+        <span class="note">sensitivity = 1 / threshold contrast</span>
+      </div>
+      <canvas id="csf" width="760" height="320"></canvas>
+      <p class="note" style="margin-top:12px">
+        Display scale magnifies the stimulus, which lowers the angular frequency the
+        observer sees to the nominal value divided by the scale; points are plotted at
+        that effective frequency, so a 3&nbsp;c/deg block at 4&times; plots at 0.75&nbsp;c/deg.
+        This is a demonstration of the paradigm at a small fraction of any studied
+        training dose: published protocols run roughly 900&ndash;1,000 trials per session
+        over 30&ndash;40 sessions; a block here is a few dozen trials.
+      </p>
+      <p class="note" style="margin-top:8px">
+        Deviation from the published protocols, stated plainly: they do not sweep fixed
+        spatial frequencies (Polat starts low and advances adaptively; Zhou et al. train at
+        the individual's cutoff frequency). This app sweeps 3 / 6 / 12 c/deg because it is
+        measuring a contrast sensitivity function, not replicating a training protocol.
+      </p>
+    </div>
   </div>
 
-  <aside>
-    <h2>Run</h2>
-    <div class="row" style="margin-bottom:14px">
-      <button class="btn" id="start">Start sweep</button>
-      <button class="btn secondary" id="abort" disabled>Abort</button>
-    </div>
-    <div class="live">
-      <div><span>Block</span><b id="lvBlock">&mdash;</b></div>
-      <div><span>Trial</span><b id="lvTrial">&mdash;</b></div>
-      <div><span>Reversals</span><b id="lvRev">&mdash;</b></div>
-      <div><span>Target contrast now</span><b class="big" id="lvCon">&mdash;</b></div>
-      <div><span>Last response</span><b id="lvLast">&mdash;</b></div>
-    </div>
-    <table class="thr" id="thrTable">
-      <tr><td>3 c/deg threshold</td><td id="thr3">&mdash;</td></tr>
-      <tr><td>6 c/deg threshold</td><td id="thr6">&mdash;</td></tr>
-      <tr><td>12 c/deg threshold</td><td id="thr12">&mdash;</td></tr>
-    </table>
+  <aside class="rail">
+    <section>
+      <h2>Run</h2>
+      <div class="row" style="margin:12px 0 4px">
+        <button class="btn" id="start">Start sweep</button>
+        <button class="btn secondary" id="abort" disabled>Abort</button>
+      </div>
 
-    <h2 style="margin-top:22px">Viewing geometry</h2>
-    <div class="ctl">
-      <label for="dist"><span>Viewing distance (assumed)</span><span></span></label>
-      <input type="number" id="dist" min="20" max="300" step="1" value="60"> cm
-    </div>
-    <div class="ctl">
-      <label for="scale"><span>Display scale (magnification)</span><span id="scaleV">1.0&times;</span></label>
-      <input type="range" id="scale" min="1" max="6" step="0.5" value="1">
-    </div>
+      <div class="hero-metric">
+        <span class="l">Target contrast now</span>
+        <span class="v" id="lvCon">&mdash;</span>
+      </div>
 
-    <div class="derived">
-      <div><span>Pixels per degree (true, unscaled)</span><b id="ppd">&mdash;</b></div>
-      <div><span>Rendered at</span><b id="scaleUsed">&mdash;</b></div>
-      <div><span>Carrier wavelength (true / drawn)</span><b id="lam">&mdash;</b></div>
-      <div><span>Flanker separation</span><b id="sep">&mdash;</b></div>
-      <div><span>Flanker contrast</span><b id="fcon">&mdash;</b></div>
-      <div><span>Interval / ISI</span><b id="timing">&mdash;</b></div>
-      <div><span>Staircase</span><b id="rule">&mdash;</b></div>
-    </div>
-    <p style="font-size:13px;color:var(--dim);margin:12px 0 0">
-      Degrees are derived from an assumed 96&nbsp;CSS&nbsp;px/inch display and the
-      viewing distance above. Display scale magnifies the drawn stimulus for
-      visibility; the px/degree readout stays at the true, unscaled value, so
-      magnification is never disguised as angular size. Thresholds are in
-      8-bit pixel contrast, not gamma-linearized luminance; comparable within
-      one display, not across displays.
-    </p>
+      <div class="readout">
+        <div><span>Block</span><b id="lvBlock">&mdash;</b></div>
+        <div><span>Trial</span><b id="lvTrial">&mdash;</b></div>
+        <div><span>Reversals</span><b id="lvRev">&mdash;</b></div>
+        <div><span>Last response</span><b id="lvLast">&mdash;</b></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Thresholds</h2>
+      <table class="thr" id="thrTable" style="margin-top:10px">
+        <tr><td>3 c/deg</td><td id="thr3">&mdash;</td></tr>
+        <tr><td>6 c/deg</td><td id="thr6">&mdash;</td></tr>
+        <tr><td>12 c/deg</td><td id="thr12">&mdash;</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Viewing geometry</h2>
+      <div class="ctl" style="margin-top:12px">
+        <label for="dist"><span>Viewing distance (assumed)</span><span></span></label>
+        <input type="number" id="dist" min="20" max="300" step="1" value="60"> cm
+      </div>
+      <div class="ctl">
+        <label for="scale"><span>Display scale (magnification)</span><span id="scaleV">1.0&times;</span></label>
+        <input type="range" id="scale" min="1" max="6" step="0.5" value="1">
+      </div>
+
+      <div class="readout fine" style="margin-top:16px">
+        <div><span>Pixels per degree (true, unscaled)</span><b id="ppd">&mdash;</b></div>
+        <div><span>Rendered at</span><b id="scaleUsed">&mdash;</b></div>
+        <div><span>Canvas drawn at</span><b id="renderRatio">&mdash;</b></div>
+        <div><span>Carrier wavelength (true / drawn)</span><b id="lam">&mdash;</b></div>
+        <div><span>Flanker separation</span><b id="sep">&mdash;</b></div>
+        <div><span>Flanker contrast</span><b id="fcon">&mdash;</b></div>
+        <div><span>Interval / ISI</span><b id="timing">&mdash;</b></div>
+        <div><span>Staircase</span><b id="rule">&mdash;</b></div>
+      </div>
+      <p class="note" style="margin-top:14px">
+        Degrees are derived from an assumed 96&nbsp;CSS&nbsp;px/inch display and the
+        viewing distance above. Display scale magnifies the drawn stimulus for
+        visibility; the px/degree readout stays at the true, unscaled value, so
+        magnification is never disguised as angular size. If the browser also
+        downscales the canvas to fit the window, that factor is reported on its
+        own line and folded into the plotted frequency. Thresholds are in
+        8-bit pixel contrast, not gamma-linearized luminance; comparable within
+        one display, not across displays.
+      </p>
+    </section>
   </aside>
 </main>
 
 <!-- =============================== MODE 2 =============================== -->
 <main id="modeRsvp" class="hidden">
   <div class="stage">
-    <div class="framing">
+    <p class="framing">
       This mode measures comprehension under RSVP (rapid serial visual presentation).
       It does not measure, and is not known to improve, natural reading. Rayner et al.
       (2016, <i>Psychological Science in the Public Interest</i>) concluded that RSVP
@@ -241,7 +553,7 @@
       saccades, the brain's automatic repair mechanism when syntax or meaning fails to
       integrate), and it abolishes parafoveal preview (pre-processing of the upcoming
       word in peripheral vision, which natural reading depends on).
-    </div>
+    </p>
 
     <p class="note center hidden" id="feedMeta"></p>
     <div class="rsvp-field" id="rsvpField">
@@ -257,66 +569,70 @@
       </div>
     </div>
 
-    <div id="resultBox" class="hidden">
-      <h2 style="text-align:center">Score: speed paired with comprehension</h2>
+    <div id="resultBox" class="figure hidden">
+      <div class="figure-head"><h2>Score · speed paired with comprehension</h2></div>
       <div class="score">
         <div><div class="v" id="resWpm">&mdash;</div><div class="l">words / min</div></div>
         <div><div class="v" id="resAcc">&mdash;</div><div class="l">comprehension</div></div>
       </div>
-      <p class="note center" id="resNote"></p>
+      <p class="note center" id="resNote" style="margin:0 auto"></p>
     </div>
   </div>
 
-  <aside>
-    <h2>Run</h2>
-    <div class="ctl">
-      <label for="source"><span>Passage source</span><span></span></label>
-      <select id="source">
-        <option value="builtin">Built-in passages (Aesop, with questions)</option>
-        <option value="feed">Instagram feed (cached 2026-09-19, browser capture + Apify snapshot)</option>
-      </select>
-    </div>
-    <div class="ctl">
-      <label for="passage"><span id="passageLabel">Passage</span><span id="passageCount"></span></label>
-      <select id="passage"></select>
-    </div>
-    <div class="row hidden" id="feedRow" style="margin-bottom:14px">
-      <button class="btn secondary" id="nextPost">Next post &nbsp;<kbd>N</kbd>/<kbd>&rarr;</kbd></button>
-    </div>
-    <p class="note hidden" id="feedNote" style="margin:-6px 0 14px">
-      Posts from a real home feed, captured once on 2026-09-19 and embedded in this
-      file; nothing is fetched now. Each post has four true/false questions, so feed
-      runs are scored the same way as the built-in passages. <kbd>N</kbd> or
-      <kbd>&rarr;</kbd> jumps to the next post whenever a question is not on screen.
-    </p>
-    <div class="ctl">
-      <label for="wpm"><span>Words per minute</span><span id="wpmV">250</span></label>
-      <input type="range" id="wpm" min="100" max="700" step="10" value="250">
-      <p class="note warn hidden" id="wpmWarn" style="margin:6px 0 0">
-        Above ~350 wpm, comprehension under RSVP declines measurably in controlled
-        studies (Di Nocera 2018, n=209). A higher number is not an achievement.
+  <aside class="rail">
+    <section>
+      <h2>Run</h2>
+      <div class="ctl" style="margin-top:12px">
+        <label for="source"><span>Passage source</span><span></span></label>
+        <select id="source">
+          <option value="builtin">Built-in passages (Aesop, with questions)</option>
+          <option value="feed">Instagram feed (cached 2026-09-19, browser capture + Apify snapshot)</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <label for="passage"><span id="passageLabel">Passage</span><span id="passageCount"></span></label>
+        <select id="passage"></select>
+      </div>
+      <div class="row hidden" id="feedRow" style="margin-bottom:12px">
+        <button class="btn secondary" id="nextPost">Next post &nbsp;<kbd>N</kbd>/<kbd>&rarr;</kbd></button>
+      </div>
+      <p class="note hidden" id="feedNote" style="margin:-4px 0 12px">
+        Posts from a real home feed, captured once on 2026-09-19 and embedded in this
+        file; nothing is fetched now. Each post has four true/false questions, so feed
+        runs are scored the same way as the built-in passages. <kbd>N</kbd> or
+        <kbd>&rarr;</kbd> jumps to the next post whenever a question is not on screen.
       </p>
-    </div>
-    <div class="row" style="margin-bottom:14px">
-      <button class="btn" id="rsvpStart">Start</button>
-      <button class="btn secondary" id="rsvpStop" disabled>Stop</button>
-    </div>
-    <div class="live">
-      <div><span>Words</span><b id="rsvpProg">&mdash;</b></div>
-    </div>
+      <div class="ctl">
+        <label for="wpm"><span>Words per minute</span><span id="wpmV">250</span></label>
+        <input type="range" id="wpm" min="100" max="700" step="10" value="250">
+        <p class="note warn hidden" id="wpmWarn" style="margin:8px 0 0">
+          Above ~350 wpm, comprehension under RSVP declines measurably in controlled
+          studies (Di Nocera 2018, n=209). A higher number is not an achievement.
+        </p>
+      </div>
+      <div class="row" style="margin:14px 0 12px">
+        <button class="btn" id="rsvpStart">Start</button>
+        <button class="btn secondary" id="rsvpStop" disabled>Stop</button>
+      </div>
+      <div class="readout">
+        <div><span>Words</span><b id="rsvpProg">&mdash;</b></div>
+      </div>
+    </section>
 
-    <h2 style="margin-top:22px">Runs this session</h2>
-    <table class="runs" id="runs">
-      <thead>
-        <tr><th scope="col">Source</th><th scope="col">Passage</th><th scope="col">wpm</th><th scope="col">Comprehension</th></tr>
-      </thead>
-      <tbody id="runsBody"></tbody>
-    </table>
-    <p class="note" style="margin-top:12px">
-      This score is independent of the contrast-detection score in the other mode.
-      No validated construct links the two; any relationship between them is an
-      untested hypothesis.
-    </p>
+    <section>
+      <h2>Runs this session</h2>
+      <table class="runs" id="runs" style="margin-top:10px">
+        <thead>
+          <tr><th scope="col">Source</th><th scope="col">Passage</th><th scope="col">wpm</th><th scope="col">Comp.</th></tr>
+        </thead>
+        <tbody id="runsBody"></tbody>
+      </table>
+      <p class="note" style="margin-top:12px">
+        This score is independent of the contrast-detection score in the other mode.
+        No validated construct links the two; any relationship between them is an
+        untested hypothesis.
+      </p>
+    </section>
   </aside>
 </main>
 
@@ -404,6 +720,11 @@ const CSF_FREQUENCIES_CPD = [3, 6, 12];
 const DEFAULT_DISPLAY_SCALE = 1;
 const CUE_MARGIN_PX = 44;  // room kept at the top of the field for the interval cue
 
+// Arming countdown. Two jobs at once: it tells the observer when to fixate,
+// and it gives the surround time to ramp down to measurement luminance so the
+// eye is light-adapted to the field before the first threshold trial.
+const ARM_STEP_MS = 420;
+
 /* ===========================================================================
    Viewing geometry
 =========================================================================== */
@@ -430,14 +751,34 @@ function pxPerDegree(distanceCm) {
    display, and not across displays.
 =========================================================================== */
 
+// Per-canvas scratch buffers. Allocating a 720x720 Float32Array and a fresh
+// ImageData is affordable once per 150 ms trial interval but not for the
+// continuous idle animation, so both are cached and reused.
+const _scratch = new WeakMap();
+function scratchFor(ctx, canvas) {
+  let sc = _scratch.get(canvas);
+  if (!sc || sc.w !== canvas.width || sc.h !== canvas.height) {
+    sc = { w: canvas.width, h: canvas.height,
+           buf: new Float32Array(canvas.width * canvas.height),
+           img: ctx.createImageData(canvas.width, canvas.height) };
+    _scratch.set(canvas, sc);
+  }
+  return sc;
+}
+
 function renderField(ctx, canvas, patches) {
   const W = canvas.width, H = canvas.height;
-  const buf = new Float32Array(W * H);   // signed modulation, in units of contrast
+  const sc = scratchFor(ctx, canvas);
+  const buf = sc.buf;                    // signed modulation, in units of contrast
+  buf.fill(0);
 
   for (const p of patches) {
     if (p.contrast <= 0) continue;
     const radius = Math.ceil(p.sigma * ENVELOPE_CUTOFF_SIGMA);
-    const theta = ORIENTATION_DEG * Math.PI / 180;
+    // Orientation is per-patch, defaulting to the task orientation. Only the
+    // decorative idle field ever varies it; every measured trial uses the
+    // ORIENTATION_DEG constant, so the task itself is unchanged.
+    const theta = (p.orientationDeg == null ? ORIENTATION_DEG : p.orientationDeg) * Math.PI / 180;
     const cosT = Math.cos(theta), sinT = Math.sin(theta);
     const phase = p.phaseDeg * Math.PI / 180;
     const k = 2 * Math.PI / p.lambda;
@@ -455,8 +796,7 @@ function renderField(ctx, canvas, patches) {
     }
   }
 
-  const img = ctx.createImageData(W, H);
-  const data = img.data;
+  const data = sc.img.data;
   const amp = MEAN_LUMA - 0.5;  // keeps C=1 inside 0..255
   for (let i = 0; i < W * H; i++) {
     let v = MEAN_LUMA + amp * buf[i];
@@ -464,7 +804,7 @@ function renderField(ctx, canvas, patches) {
     const q = i * 4;
     data[q] = v; data[q + 1] = v; data[q + 2] = v; data[q + 3] = 255;
   }
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(sc.img, 0, 0);
 }
 
 /* ===========================================================================
@@ -489,8 +829,19 @@ function geometry(cpd) {
   const lambda = lambdaTrue * scale;
   return {
     cpd, distanceCm, ppd, lambdaTrue, requested, scale, clamped: scale < requested,
+    renderRatio: renderRatio(),
     lambda, sigma: lambda * SIGMA_LAMBDA, sep: lambda * FLANKER_SEPARATION_LAMBDA
   };
+}
+
+// The canvas has a fixed 720 px backing store but CSS may display it smaller
+// to fit the window. That downscale is invisible in the drawn wavelength and
+// silently RAISES the angular spatial frequency the observer receives, so it
+// is measured, reported on its own line, and folded into the plotted
+// effective frequency rather than left to be discovered.
+function renderRatio() {
+  const shown = canvas.clientWidth;
+  return shown > 0 ? shown / canvas.width : 1;
 }
 
 function drawFrame(geo, { showTarget, targetContrast, phaseDeg, cue, cueColor }) {
@@ -518,7 +869,7 @@ function drawBlank(cue, cueColor) {
 
 function drawCue(text, color) {
   if (!text) return;
-  ctx.font = "700 34px ui-sans-serif, system-ui, sans-serif";
+  ctx.font = "600 30px \"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace";
   ctx.textAlign = "left"; ctx.textBaseline = "top";
   ctx.fillStyle = color || "rgb(20,20,20)";
   ctx.fillText(text, 16, 8);
@@ -618,10 +969,11 @@ function updateLive() {
   el("lvTrial").textContent = s ? `${s.trials} / ${MAX_TRIALS_PER_BLOCK}` : "—";
   el("lvRev").textContent = s ? `${s.reversals.length} / ${REVERSALS_TO_STOP}` : "—";
   el("lvCon").textContent = s ? fmtC(s.contrast) : "—";
+  el("lvCon").dataset.idle = s ? "false" : "true";
   for (const f of CSF_FREQUENCIES_CPD) {
     const r = sweep.results[f];
     el("thr" + f).textContent = r
-      ? fmtC(r.contrast) + (r.scale > 1 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "") + (r.provisional ? " (provisional)" : "")
+      ? fmtC(r.contrast) + (Math.abs(r.cpdEffective - f) > 0.01 ? ` at ${r.cpdEffective.toFixed(2)} c/deg eff.` : "") + (r.provisional ? " (provisional)" : "")
       : "—";
   }
 }
@@ -631,6 +983,10 @@ function updateGeometryReadout() {
   el("scaleV").textContent = geo.requested.toFixed(1) + "×";
   el("ppd").textContent = geo.ppd.toFixed(1) + " px/deg";
   el("scaleUsed").textContent = geo.scale.toFixed(1) + "×" + (geo.clamped ? " (clamped to fit)" : "");
+  const exact = Math.abs(geo.renderRatio - 1) < 0.02;
+  el("renderRatio").textContent = exact ? "1:1 (exact)" : geo.renderRatio.toFixed(2) + "× of backing store";
+  el("renderRatio").style.color = exact ? "" : "var(--warn)";
+  document.body.dataset.renderExact = exact ? "true" : "false";
   el("lam").textContent = `${geo.lambdaTrue.toFixed(1)} / ${geo.lambda.toFixed(1)} px`;
   el("sep").textContent = `${FLANKER_SEPARATION_LAMBDA} λ = ${geo.sep.toFixed(0)} px drawn`;
   el("fcon").textContent = FLANKER_CONTRAST.toFixed(2);
@@ -639,9 +995,109 @@ function updateGeometryReadout() {
   return geo;
 }
 
+/* ===========================================================================
+   Phase controller
+
+   The page has three phases, carried on body[data-phase] and enforced in CSS:
+
+     idle      full visual expression; the stimulus field animates
+     arming    the surround ramps down to measurement luminance
+     measuring nothing moves, nothing glows, nothing competes
+
+   The rule this encodes: decoration is free everywhere except while a
+   threshold is actually being measured. Binding it to one attribute means a
+   future code path cannot forget to switch an effect off.
+=========================================================================== */
+
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function isGaborMode() { return !el("modeGabor").classList.contains("hidden"); }
+
+function setPhase(phase) {
+  document.body.dataset.phase = phase;
+  if (phase === "idle") startAmbient(); else stopAmbient();
+  updateFieldCaption();
+}
+
+function updateFieldCaption() {
+  const cap = el("fieldCaption");
+  if (!cap) return;
+  if (document.body.dataset.phase !== "idle") { cap.textContent = ""; return; }
+  // The cinematic idle field is decoration, not the task. Say so, rather than
+  // letting a viewer take an ornamental lattice for the measured stimulus.
+  // The static fallback draws the real stimulus; the animated field does not.
+  cap.textContent = ambientRaf
+    ? "Idle field — decorative. The measured stimulus is the three-patch collinear array; press Start sweep to see it."
+    : "Preview — the measured stimulus: two collinear flankers and a faint central target.";
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient stimulus field. Both treatments draw through the same Gabor
+   renderer the task uses, so the ornament is made of the subject matter.
+--------------------------------------------------------------------------- */
+
+const AMBIENT_FPS = 24;              // enough for smooth drift, cheap enough to idle at
+const AMBIENT_LAMBDA_PX = 30;        // decorative lattice only; unrelated to task geometry
+const AMBIENT_SIGMA_PX = 26;
+const AMBIENT_LATTICE = 4;           // 4 x 4 patches
+
+// A lattice of Gabors, orientations turning, contrast crossing the field as a
+// travelling wave. Decorative, and captioned as such on screen: it is not the
+// three-patch array the task measures.
+function ambientPatches(t) {
+  const W = canvas.width, H = canvas.height;
+  const N = AMBIENT_LATTICE, step = W / N, out = [];
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const cx = step * (i + 0.5), cy = step * (j + 0.5);
+      const diag = (cx + cy) / (W + H);
+      const wave = 0.5 - 0.5 * Math.cos((t / 2400 - diag) * Math.PI * 2);
+      out.push({
+        cx, cy, lambda: AMBIENT_LAMBDA_PX, sigma: AMBIENT_SIGMA_PX,
+        contrast: 0.05 + wave * 0.5,
+        orientationDeg: (t / 60 + (i - j) * 22) % 360,
+        phaseDeg: (t / 30 + i * 47 + j * 29) % 360,
+      });
+    }
+  }
+  return out;
+}
+
+let ambientRaf = 0, ambientLast = -1e9;
+function ambientFrame(ts) {
+  ambientRaf = requestAnimationFrame(ambientFrame);
+  if (ts - ambientLast < 1000 / AMBIENT_FPS) return;
+  ambientLast = ts;
+  renderField(ctx, canvas, ambientPatches(ts));
+}
+
+function startAmbient() {
+  if (ambientRaf || !isGaborMode()) return;
+  if (REDUCED_MOTION.matches || document.hidden) { drawStaticIdle(); return; }
+  ambientRaf = requestAnimationFrame(ambientFrame);
+}
+function stopAmbient() {
+  if (ambientRaf) { cancelAnimationFrame(ambientRaf); ambientRaf = 0; }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopAmbient();
+  else if (document.body.dataset.phase === "idle") startAmbient();
+});
+REDUCED_MOTION.addEventListener("change", () => {
+  stopAmbient();
+  if (document.body.dataset.phase === "idle") { startAmbient(); drawStaticIdle(); }
+});
+
+function drawStaticIdle(geo) {
+  geo = geo || updateGeometryReadout();
+  drawFrame(geo, { showTarget: true, targetContrast: 0.25, phaseDeg: 0, cue: "Preview: target 0.25 contrast" });
+}
+
 function drawIdle() {
   const geo = updateGeometryReadout();
-  drawFrame(geo, { showTarget: true, targetContrast: 0.25, phaseDeg: 0, cue: "Preview: target 0.25 contrast" });
+  if (ambientRaf) return;          // the ambient loop paints its own frames
+  drawStaticIdle(geo);
 }
 
 // Drop focus from whatever control was last clicked or dragged, so response
@@ -658,7 +1114,16 @@ async function runSweep() {
   el("start").disabled = true; el("abort").disabled = false;
   el("dist").disabled = true; el("scale").disabled = true;
   el("lvLast").textContent = "—";
+  el("lvLast").style.color = "";
   drawCSF();
+
+  setPhase("arming");
+  for (const c of ["3", "2", "1"]) {
+    drawBlank(c);
+    await sleep(ARM_STEP_MS);
+    if (runId !== my) return;
+  }
+  setPhase("measuring");
 
   for (const cpd of CSF_FREQUENCIES_CPD) {
     const stair = new Staircase();
@@ -706,7 +1171,11 @@ async function runSweep() {
     // Magnifying the drawn stimulus lowers the angular spatial frequency the
     // observer actually sees to cpd / scale. The threshold is recorded and
     // plotted at that effective frequency, never at the nominal one.
-    sweep.results[cpd] = Object.assign(stair.threshold(), { cpdEffective: cpd / geo.scale, scale: geo.scale });
+    // Effective angular frequency = nominal / (display scale x canvas downscale).
+    // Both magnifications are folded in; neither is disguised as angular size.
+    sweep.results[cpd] = Object.assign(stair.threshold(), {
+      cpdEffective: cpd / (geo.scale * geo.renderRatio), scale: geo.scale, renderRatio: geo.renderRatio
+    });
     updateLive();
     drawCSF();
   }
@@ -720,6 +1189,9 @@ function finishSweep(msg) {
   el("dist").disabled = false; el("scale").disabled = false;
   drawBlank(msg);
   updateLive();
+  // Hold the finished message briefly before the idle field resumes, so the
+  // result is readable rather than immediately painted over.
+  setTimeout(() => { if (!sweep.running) setPhase("idle"); }, 1400);
 }
 
 function abortSweep() {
@@ -733,49 +1205,102 @@ function abortSweep() {
    CSF plot: sensitivity (1/threshold) vs spatial frequency, log-log
 =========================================================================== */
 
+const csfLogical = { w: 720, h: 300 };
+
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+// The chart is sized from its container and drawn at device resolution, so
+// the hairlines and the numerals stay crisp instead of being resampled.
+function fitCSF() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(280, Math.round(csfCanvas.clientWidth || 720));
+  const h = Math.max(200, Math.round(w * 0.42));
+  if (w === csfLogical.w && h === csfLogical.h && csfCanvas.width === Math.round(w * dpr)) return;
+  csfLogical.w = w; csfLogical.h = h;
+  csfCanvas.width = Math.round(w * dpr);
+  csfCanvas.height = Math.round(h * dpr);
+  csfCanvas.style.height = h + "px";
+  csfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawCSF();
+}
+
 function drawCSF() {
-  const c = csfCtx, W = csfCanvas.width, H = csfCanvas.height;
-  const L = 70, R = 20, T = 20, B = 46;
-  c.fillStyle = "#15151a"; c.fillRect(0, 0, W, H);
+  const c = csfCtx, W = csfLogical.w, H = csfLogical.h;
+  const L = 56, R = 18, T = 18, B = 44;
+  const ink = cssVar("--ink", "#e6e9f2"), dim = cssVar("--dim", "#8b93a8");
+  const dimmer = cssVar("--dimmer", "#5d6577"), line = cssVar("--line-soft", "#1a1f2c");
+  const accent = cssVar("--accent", "#6ea8ff"), warn = cssVar("--warn", "#ffb454");
+  const mono = '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+
+  c.clearRect(0, 0, W, H);
   const fMin = 0.5, fMax = 30, sMin = 1, sMax = 200;
   const xOf = (f) => L + (Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin)) * (W - L - R);
   const yOf = (s) => T + (1 - (Math.log10(s) - Math.log10(sMin)) / (Math.log10(sMax) - Math.log10(sMin))) * (H - T - B);
 
-  c.strokeStyle = "#2a2a33"; c.lineWidth = 1;
-  c.fillStyle = "#9a9aa8"; c.font = "14px ui-sans-serif, system-ui, sans-serif";
+  // Grid. Every tick names a value the scale actually reaches.
+  c.strokeStyle = line; c.lineWidth = 1;
+  c.fillStyle = dimmer; c.font = "11px " + mono;
   c.textAlign = "center"; c.textBaseline = "top";
   for (const f of [0.5, 1, 2, 3, 6, 12, 24]) {
-    c.beginPath(); c.moveTo(xOf(f), T); c.lineTo(xOf(f), H - B); c.stroke();
-    c.fillText(String(f), xOf(f), H - B + 6);
+    const x = Math.round(xOf(f)) + 0.5;
+    c.beginPath(); c.moveTo(x, T); c.lineTo(x, H - B); c.stroke();
+    c.fillText(String(f), xOf(f), H - B + 8);
   }
   c.textAlign = "right"; c.textBaseline = "middle";
-  for (const s of [1, 3, 10, 30, 100]) {
-    c.beginPath(); c.moveTo(L, yOf(s)); c.lineTo(W - R, yOf(s)); c.stroke();
-    c.fillText(String(s), L - 8, yOf(s));
+  for (const sv of [1, 3, 10, 30, 100]) {
+    const y = Math.round(yOf(sv)) + 0.5;
+    c.beginPath(); c.moveTo(L, y); c.lineTo(W - R, y); c.stroke();
+    c.fillText(String(sv), L - 10, yOf(sv));
   }
+
+  c.fillStyle = dim; c.font = "11px " + mono;
   c.textAlign = "center"; c.textBaseline = "bottom";
-  c.fillText("spatial frequency (c/deg)", L + (W - L - R) / 2, H - 4);
-  c.save(); c.translate(16, T + (H - T - B) / 2); c.rotate(-Math.PI / 2);
-  c.textBaseline = "top"; c.fillText("sensitivity (1 / threshold)", 0, 0); c.restore();
+  c.fillText("SPATIAL FREQUENCY (C/DEG)", L + (W - L - R) / 2, H - 4);
+  c.save(); c.translate(14, T + (H - T - B) / 2); c.rotate(-Math.PI / 2);
+  c.textBaseline = "top"; c.fillText("SENSITIVITY (1 / THRESHOLD)", 0, 0); c.restore();
 
   // Points sit at the effective (magnified) frequency, not the nominal block label.
-  const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f]).map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }));
+  const pts = CSF_FREQUENCIES_CPD.filter((f) => sweep.results[f])
+    .map((f) => ({ f: sweep.results[f].cpdEffective, s: 1 / sweep.results[f].contrast, p: sweep.results[f].provisional }))
+    .sort((a, b) => a.f - b.f);
+
   if (pts.length > 1) {
-    c.strokeStyle = "#6ea8ff"; c.lineWidth = 3; c.beginPath();
-    pts.forEach((p, i) => i ? c.lineTo(xOf(p.f), yOf(p.s)) : c.moveTo(xOf(p.f), yOf(p.s)));
+    // Area fill first, so the curve reads as a function rather than a polyline.
+    c.beginPath();
+    c.moveTo(xOf(pts[0].f), H - B);
+    pts.forEach((pt) => c.lineTo(xOf(pt.f), yOf(pt.s)));
+    c.lineTo(xOf(pts[pts.length - 1].f), H - B);
+    c.closePath();
+    const grad = c.createLinearGradient(0, T, 0, H - B);
+    grad.addColorStop(0, "rgba(110,168,255,.22)");
+    grad.addColorStop(1, "rgba(110,168,255,0)");
+    c.fillStyle = grad; c.fill();
+
+    c.strokeStyle = accent; c.lineWidth = 2.5; c.lineJoin = "round";
+    c.beginPath();
+    pts.forEach((pt, i) => i ? c.lineTo(xOf(pt.f), yOf(pt.s)) : c.moveTo(xOf(pt.f), yOf(pt.s)));
     c.stroke();
   }
-  for (const p of pts) {
-    c.fillStyle = p.p ? "#ffb454" : "#6ea8ff";
-    c.beginPath(); c.arc(xOf(p.f), yOf(p.s), 8, 0, Math.PI * 2); c.fill();
-    c.fillStyle = "#e8e8ee"; c.font = "600 15px ui-sans-serif, system-ui, sans-serif";
+
+  for (const pt of pts) {
+    const x = xOf(pt.f), y = yOf(pt.s), col = pt.p ? warn : accent;
+    // Provisional estimates are drawn hollow: the block hit its trial cap
+    // before the staircase converged, so the point is not a settled threshold.
+    c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2);
+    if (pt.p) { c.fillStyle = cssVar("--panel", "#11141c"); c.fill(); c.strokeStyle = col; c.lineWidth = 2; c.stroke(); }
+    else { c.fillStyle = col; c.fill(); }
+    c.fillStyle = ink; c.font = "500 12px " + mono;
     c.textAlign = "center"; c.textBaseline = "bottom";
-    c.fillText(p.s.toFixed(1), xOf(p.f), yOf(p.s) - 12);
+    c.fillText(pt.s.toFixed(1), x, y - 11);
   }
+
   if (pts.length === 0) {
-    c.fillStyle = "#9a9aa8"; c.font = "16px ui-sans-serif, system-ui, sans-serif";
+    c.fillStyle = dimmer; c.font = "13px " + mono;
     c.textAlign = "center"; c.textBaseline = "middle";
-    c.fillText("No thresholds yet. Start a sweep.", L + (W - L - R) / 2, T + (H - T - B) / 2);
+    c.fillText("no thresholds yet — start a sweep", L + (W - L - R) / 2, T + (H - T - B) / 2);
   }
 }
 
@@ -1347,11 +1872,14 @@ async function runRsvp() {
   el("rsvpStart").disabled = true; el("rsvpStop").disabled = false;
   el("qBox").classList.add("hidden"); el("resultBox").classList.add("hidden");
 
-  // Countdown so the observer is fixating when the first word lands.
+  // Countdown so the observer is fixating when the first word lands, and so
+  // the surrounding page has time to settle into its measurement state.
+  setPhase("arming");
   for (const c of ["3", "2", "1"]) {
     el("rsvpWord").textContent = c; el("rsvpProg").textContent = `0 / ${words.length}`;
     await sleep(600); if (rsvp.runId !== my) return;
   }
+  setPhase("measuring");
   for (let i = 0; i < words.length; i++) {
     el("rsvpWord").textContent = words[i];
     el("rsvpProg").textContent = `${i + 1} / ${words.length}`;
@@ -1388,6 +1916,7 @@ async function runRsvp() {
 
 function stopRsvp(aborted = true) {
   rsvp.running = false;
+  setPhase("idle");
   if (aborted) { rsvp.runId++; if (keyResolver) keyResolver(null); el("rsvpWord").textContent = "Stopped"; el("qBox").classList.add("hidden"); }
   el("rsvpStart").disabled = false; el("rsvpStop").disabled = true;
 }
@@ -1409,13 +1938,33 @@ function showMode(which) {
   el("modeRsvp").classList.toggle("hidden", gabor);
   el("tabGabor").setAttribute("aria-selected", gabor);
   el("tabRsvp").setAttribute("aria-selected", !gabor);
+  setPhase("idle");
+  if (gabor) fitCSF();
 }
 el("tabGabor").addEventListener("click", () => showMode("gabor"));
 el("tabRsvp").addEventListener("click", () => showMode("rsvp"));
 
-drawIdle();
+/* ===========================================================================
+   Boot
+=========================================================================== */
+
+// The canvas is downscaled by CSS whenever the window is too narrow for its
+// 720 px backing store, which changes the angular frequency the observer
+// receives. Re-read it on every layout change rather than at load only.
+if (window.ResizeObserver) {
+  new ResizeObserver(() => {
+    if (!sweep.running) updateGeometryReadout();
+    fitCSF();
+  }).observe(document.body);
+} else {
+  window.addEventListener("resize", () => { if (!sweep.running) updateGeometryReadout(); fitCSF(); });
+}
+
 updateLive();
-drawCSF();
+updateGeometryReadout();
+fitCSF();
+setPhase("idle");
+drawIdle();
 </script>
 </body>
 </html>
