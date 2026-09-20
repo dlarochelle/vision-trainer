@@ -11,11 +11,30 @@ comprehension scoring.
 
 ## Hard rules
 
-- **One file.** The deliverable is a self-contained `index.html`. No
-  build step, no bundler, no package manager, no external assets, no
-  CDN links. Vanilla JS and canvas only.
-- **Offline.** Zero network calls on the demo path. It must work
-  opened from `file://`.
+- **One file.** The deliverable is a single `index.html`. No build
+  step, no bundler, no package manager. Vanilla JS and canvas only.
+- **Network, relaxed 2026-09-19.** The hackathon is over and the app
+  is moving to a hosted demo, so the offline rule is retired. A
+  webfont stylesheet is allowed. Everything else — all CSS, all JS,
+  all passage and feed data — still ships inside `index.html`, and the
+  page must still render and run correctly with the font request
+  blocked, falling back to the declared system stacks. No runtime data
+  fetching on the demo path; the cached feed stays embedded.
+- **Measurement quarantine.** This replaces the old "keep it austere"
+  habit, which was never a written rule. The app may look as good as
+  it can *except* while a timed measurement is running. Three phases
+  live on `body[data-phase]`: `idle` (full visual expression),
+  `arming` (the surround ramps down to measurement luminance), and
+  `measuring` (nothing animates, nothing glows, the surround is locked
+  to the field luminance, and the rail and masthead desaturate). The
+  quarantine is enforced in CSS against that one attribute, never
+  case by case in JS, so a new effect cannot forget to switch itself
+  off. Decoration that is not the task must say so on screen: the
+  cinematic idle lattice carries a caption naming it as decorative.
+- **Single theme, on purpose.** The page is dark-only. Surround
+  luminance is a variable in a contrast-detection task, so a light
+  theme would change the thresholds being measured. This is a choice,
+  not an omission; do not "fix" it by adding a light mode.
 - **Goals, not results.** The pitch is a tool to see better and read
   faster. Those are stated as goals under testing, never as results.
   See "Claims" below. The footer disclaimer and the banned-word list
@@ -71,6 +90,28 @@ into a single "visual processing speed" metric. There is no validated
 construct linking contrast sensitivity to RSVP reading. If the two are
 displayed together, label the link explicitly as an untested
 hypothesis.
+
+## Visual direction
+
+Chosen by David on 2026-09-19 from two treatments built side by side:
+the **cinematic** direction. The comparison scaffold is gone — there
+is no `data-treatment` attribute and no second CSS block. Do not
+reintroduce a treatment switcher.
+
+The direction: the stimulus is the hero. A display-serif masthead, and
+an animated Gabor lattice in the stimulus frame while idle. Boldness
+is spent in two places only — that masthead and the glow beneath the
+stimulus frame — and everything around them stays quiet. All of it is
+subject to the measurement quarantine above.
+
+The idle lattice is **decoration, not the task**, and carries an
+on-screen caption saying so. When the animation is suppressed
+(reduced-motion, hidden tab) the field falls back to a static draw of
+the real three-patch stimulus and the caption changes to match. Keep
+that pairing honest if either side changes.
+
+Typefaces: IBM Plex Sans (interface), IBM Plex Mono (every numeric
+readout and axis label), Instrument Serif (masthead only).
 
 ## Docs and build
 
