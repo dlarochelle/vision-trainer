@@ -284,6 +284,22 @@
   .warn { color: var(--warn); }
   .hidden { display: none !important; }
 
+  /* Live staircase state -- the target contrast now, the reversal count, the
+     last response -- is for whoever is debugging the staircase, not for the
+     observer. Naming the current target contrast while the observer is being
+     asked to detect it hands them information about the stimulus, and it does
+     so nearest threshold, which is exactly where the staircase is trying to
+     converge. `?debug=1` puts it back.
+
+     This is not the "state assumptions in the UI" rule being traded away: the
+     assumptions -- viewing distance, px/degree, the deviation notes, the
+     staircase rule -- stay visible at setup and in the results either way.
+     What moves behind the flag is live state during trials, which is a
+     different thing. Written against `body:not([data-debug="1"])` rather than
+     as a bare `.debug-only { display: none }` so that each element keeps its
+     own display type when the flag is on. */
+  body:not([data-debug="1"]) .debug-only { display: none; }
+
   /* A standing caveat, not an alert. Bordered on one edge so it reads as an
      annotation rather than one more card. */
   .framing {
@@ -444,18 +460,43 @@
   .resp:disabled { opacity: .3; cursor: default; }
   .resp:not(:disabled):active { background: var(--accent); color: #061020; }
   .resp-foot {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    display: flex; align-items: center; justify-content: flex-end; gap: 12px;
     margin-top: 10px;
   }
-  .resp-hint { font-family: var(--mono); font-size: 11px; color: var(--dimmer); letter-spacing: .06em; }
+  /* The mapping is instruction text for an input method a phone does not have,
+     so a coarse pointer -- a finger on a touchscreen -- is what takes it away.
+     The test is the pointer, not the viewport: a laptop in a narrow window is
+     below the focus-mode breakpoint and still answers with F and J.
+
+     Stated as "hide on coarse" rather than "show on fine" so it fails toward
+     showing the hint. `pointer: none` matches neither, and a keyboard-only
+     desktop or a TV browser is exactly the case with nothing but the keys this
+     line describes; a browser too old for the pointer feature lands there too.
+     The hint costs a line of text where it is not needed and costs the whole
+     input method where it is.
+
+     It carries its own `margin-right: auto` rather than the row using
+     `space-between`, so when the hint is absent Stop stays at the end of the
+     row instead of sliding to the start. */
+  .resp-hint {
+    margin-right: auto;
+    font-family: var(--mono); font-size: 11px; color: var(--dimmer); letter-spacing: .06em;
+  }
+  @media (pointer: coarse) {
+    .resp-hint { display: none; }
+  }
   .resp-stop {
     background: none; border: 0; color: var(--dim); cursor: pointer;
     font-size: 12px; text-decoration: underline; padding: 4px;
   }
   .focus-bar { display: none; }
   body.focus .focus-bar {
-    display: flex; justify-content: flex-end; width: 100%; max-width: 860px;
+    display: flex; justify-content: flex-end; gap: 20px; width: 100%; max-width: 860px;
   }
+  /* nextPost() refuses while a comprehension question is on screen, because
+     advancing would discard a partly scored run. Take the control away there
+     rather than leave one that does nothing when pressed. */
+  body[data-asking="1"] #rsvpFocusNext { display: none; }
 
   /* --------------------------------------------------------------- focus mode */
   /* A timed two-interval task cannot share a scroll container with prose. Below
@@ -636,7 +677,7 @@
 
   <aside class="rail">
     <details id="railDrawer" class="rail-drawer">
-    <summary>Settings and live readouts</summary>
+    <summary>Settings and run progress</summary>
     <section>
       <h2>Run</h2>
       <div class="row" style="margin:12px 0 4px">
@@ -644,7 +685,11 @@
         <button class="btn secondary" id="abort" disabled>Abort</button>
       </div>
 
-      <div class="hero-metric">
+      <!-- Progress is observer-facing; staircase state is not. See the
+           `.debug-only` rule in the stylesheet for why, and pass ?debug=1 to
+           show it. The block line names the spatial frequency, which the
+           observer can see in the stimulus, and its position in the sweep. -->
+      <div class="hero-metric debug-only">
         <span class="l">Target contrast now</span>
         <span class="v" id="lvCon">&mdash;</span>
       </div>
@@ -652,9 +697,13 @@
       <div class="readout">
         <div><span>Block</span><b id="lvBlock">&mdash;</b></div>
         <div><span>Trial</span><b id="lvTrial">&mdash;</b></div>
-        <div><span>Reversals</span><b id="lvRev">&mdash;</b></div>
-        <div><span>Last response</span><b id="lvLast">&mdash;</b></div>
+        <div class="debug-only"><span>Reversals</span><b id="lvRev">&mdash;</b></div>
+        <div class="debug-only"><span>Last response</span><b id="lvLast">&mdash;</b></div>
       </div>
+      <p class="note debug-only" style="margin-top:12px">
+        Live staircase state, shown because <span style="font-family:var(--mono)">?debug=1</span> is set on the URL.
+        An ordinary run shows the block and the trial count only.
+      </p>
     </section>
 
     <section>
@@ -734,9 +783,11 @@
       </div>
     </div>
 
-    <!-- Focus mode hides the rail, and with it the Stop button. Reading and
-         answering need no other controls, so this bar carries only that one. -->
+    <!-- Focus mode hides the rail, and with it Stop and, on the feed source,
+         Next post. The N key still skips a post, but a phone has no N key, so
+         without these two a feed run could only be left by stopping it. -->
     <div class="focus-bar" id="rsvpFocusBar">
+      <button class="resp-stop hidden" id="rsvpFocusNext">Next post</button>
       <button class="resp-stop" id="rsvpFocusStop">Stop</button>
     </div>
 
@@ -751,6 +802,8 @@
   </div>
 
   <aside class="rail">
+    <details id="rsvpRailDrawer" class="rail-drawer">
+    <summary>Settings and runs</summary>
     <section>
       <h2>Run</h2>
       <div class="ctl" style="margin-top:12px">
@@ -804,6 +857,7 @@
         untested hypothesis.
       </p>
     </section>
+    </details>
   </aside>
 </main>
 
@@ -1231,6 +1285,12 @@ let runId = 0;
 const sweep = { running: false, block: null, stair: null, results: {} };
 
 function fmtC(c) { return c == null ? "—" : c.toFixed(3); }
+
+// Live staircase state is diagnostic, not observer-facing; `.debug-only` in
+// the stylesheet says why. The readouts are always written, so nothing has to
+// remember to branch on the flag -- CSS decides whether they are on screen.
+const DEBUG_READOUTS = new URLSearchParams(location.search).get("debug") === "1";
+if (DEBUG_READOUTS) document.body.dataset.debug = "1";
 
 function updateLive() {
   const s = sweep.stair;
@@ -1737,10 +1797,11 @@ el("respStop").addEventListener("click", abortSweep);
 el("resp1").addEventListener("click", () => { if (keyResolver) keyResolver("f"); });
 el("resp2").addEventListener("click", () => { if (keyResolver) keyResolver("j"); });
 
-// The rail is open beside the field on wide screens and collapsed below them,
-// where it would otherwise push the task off the bottom of the page.
-const railDrawer = el("railDrawer");
-function syncRailDrawer() { railDrawer.open = !FOCUS_MQ.matches; }
+// The rails are open beside the field on wide screens and collapsed below
+// them, where they would otherwise push the task off the bottom of the page.
+// Both modes' rails use the same drawer markup, so one sync serves both.
+const railDrawers = document.querySelectorAll(".rail-drawer");
+function syncRailDrawer() { for (const d of railDrawers) d.open = !FOCUS_MQ.matches; }
 FOCUS_MQ.addEventListener("change", syncRailDrawer);
 syncRailDrawer();
 // Adjusting the geometry controls suspends the demo and draws a still frame of
@@ -2256,6 +2317,7 @@ function populatePassages(keepIndex = 0) {
     ? `${list.length} cached \u00b7 pick any`
     : `${list.length} passages \u00b7 pick any`;
   el("feedRow").classList.toggle("hidden", !feed);
+  el("rsvpFocusNext").classList.toggle("hidden", !feed);
   el("feedNote").classList.toggle("hidden", !feed);
   updateFeedMeta();
 }
@@ -2299,6 +2361,7 @@ function nextPost() {
   runRsvp();
 }
 el("nextPost").addEventListener("click", nextPost);
+el("rsvpFocusNext").addEventListener("click", nextPost);
 
 function updateWpm() {
   const w = parseInt(el("wpm").value, 10);
