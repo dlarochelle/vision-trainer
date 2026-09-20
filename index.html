@@ -563,17 +563,6 @@
   @media (max-width: 1040px) {
     .rail-drawer > summary { display: block; }
   }
-  /* A short viewport -- a phone in landscape, a small phone -- has to fit the
-     masthead, the field that starts a run, and a four-line verbatim footer that
-     is not ours to shrink. The masthead is the introduction and the field is the
-     control, so the introduction is what gives way. Only below 600px tall: on a
-     normal phone in portrait nothing here is short of room, and the display type
-     is the one place this design spends boldness. */
-  @media (max-height: 600px) {
-    .masthead { padding-block: 12px 10px; gap: 12px; }
-    h1 { font-size: 21px; }
-    .tagline { font-size: 12.5px; margin-top: 2px; }
-  }
   @media (max-width: 640px) {
     :root { --gutter: 16px; }
     .masthead { padding-block: 16px 14px; gap: 14px; }
@@ -581,6 +570,23 @@
     .modes button { flex: 1; padding: 9px 8px; font-size: 13px; }
     .score { gap: 26px; }
     .rsvp-field { height: 200px; }
+  }
+
+  /* A short viewport -- a phone in landscape, a small phone -- has to fit the
+     masthead, the field that starts a run, and a four-line verbatim footer that
+     is not ours to shrink. The masthead is the introduction and the field is the
+     control, so the introduction is what gives way. Only below 600px tall: on a
+     normal phone in portrait nothing here is short of room, and the display type
+     is the one place this design spends boldness.
+
+     After the width query on purpose. A small phone is both narrow and short,
+     the two blocks set the same properties at the same specificity, and the
+     later one wins -- so this has to sit below to reach the viewport it is
+     written for. */
+  @media (max-height: 600px) {
+    .masthead { padding-block: 12px 10px; gap: 12px; }
+    h1 { font-size: 21px; }
+    .tagline { font-size: 12.5px; margin-top: 2px; }
   }
 
   /* ---------------------------------------------------------- reduced motion */
