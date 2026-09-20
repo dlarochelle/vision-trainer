@@ -27,6 +27,10 @@
     --line:      #222839;
     --line-soft: #1a1f2c;
     --ink:       #e6e9f2;
+    /* Body copy that is neither a heading nor a caption. The Gabor brief is
+       instructional text a first-time observer has to read before their first
+       trial, so it sits a clear step above --dim without competing with --ink. */
+    --ink-soft:  #aab1c4;
     --dim:       #8b93a8;
     /* Carries the 10-11px uppercase labels and the CSF axis ticks, so it has
        to clear 4.5:1 against every surface it sits on, not just the darkest.
@@ -249,6 +253,32 @@
   .note { font-size: 13px; color: var(--dim); max-width: 68ch; margin: 0; }
   .note.center { text-align: center; }
   .note b { color: var(--ink); font-weight: 600; }
+
+  /* The Gabor brief is onboarding, not a footnote. It runs to eight lines, and
+     centred prose gives the eye no consistent left margin to return to; it was
+     also set at caption size and caption colour while being the first thing a
+     new observer must read. Promoted here to instructional body copy: ranged
+     left, one step larger, --ink-soft, with the key-press line and the safety
+     line separated out. Scoped to #note on purpose — .note.center still carries
+     the one-line captions elsewhere on the page. Presentation only; the wording
+     is unchanged from PR #5, where it was written after watching people fail to
+     understand the task. */
+  #note {
+    display: flex; flex-direction: column; gap: .8em;
+    text-align: left; max-width: 60ch; margin: 2px auto 0;
+    font-size: 14px; line-height: 1.65; color: var(--ink-soft);
+    border-left: 2px solid var(--line); padding: 4px 0 4px 18px;
+  }
+  #note p { margin: 0; max-width: none; }
+  #note .brief-head {
+    display: block; margin-bottom: .3em;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--dimmer); font-weight: 500;
+  }
+  /* The two keys are the only thing the observer has to act on, so they get
+     full --ink; the safety line is the only thing that overrides the task. */
+  #note .brief-act { color: var(--ink); }
+  #note .brief-stop { color: var(--warn); font-size: 13px; }
   .warn { color: var(--warn); }
   .hidden { display: none !important; }
 
@@ -440,22 +470,29 @@
     </div>
     <p class="note center keep" id="fieldCaption"></p>
 
-    <p class="note center keep" id="note">
-      <b>What to look for.</b> Each trial shows two flashes in a row, labelled
-      <b>1</b> and <b>2</b> in the corner. Both flashes show the same two high-contrast
-      striped patches, one above centre and one below centre &mdash; ignore those, they
-      never change. In exactly <i>one</i> of the two flashes a third, much fainter
-      striped patch appears <i>in the gap between them</i>, at the centre of the screen.
-      Your only job is to say which flash had that faint centre patch.
-      <br>
-      Press <kbd>F</kbd>/<kbd>&larr;</kbd> if it was in flash <b>1</b>,
-      <kbd>J</kbd>/<kbd>&rarr;</kbd> if it was in flash <b>2</b>.
-      The centre patch gets fainter as you go, so you will reach a point where you
-      genuinely cannot see it &mdash; guess then. Guessing is expected; the staircase
-      needs your wrong answers to find your threshold.
-      <br>
-      Stop if you get a headache, eye strain, or double vision.
-    </p>
+    <div class="note keep" id="note">
+      <p>
+        <span class="brief-head">What to look for</span>
+        Each trial shows two flashes in a row, labelled
+        <b>1</b> and <b>2</b> in the corner. Both flashes show the same two high-contrast
+        striped patches, one above centre and one below centre &mdash; ignore those, they
+        never change. In exactly <i>one</i> of the two flashes a third, much fainter
+        striped patch appears <i>in the gap between them</i>, at the centre of the screen.
+        Your only job is to say which flash had that faint centre patch.
+      </p>
+      <p class="brief-act">
+        Press <kbd>F</kbd>/<kbd>&larr;</kbd> if it was in flash <b>1</b>,
+        <kbd>J</kbd>/<kbd>&rarr;</kbd> if it was in flash <b>2</b>.
+      </p>
+      <p>
+        The centre patch gets fainter as you go, so you will reach a point where you
+        genuinely cannot see it &mdash; guess then. Guessing is expected; the staircase
+        needs your wrong answers to find your threshold.
+      </p>
+      <p class="brief-stop">
+        Stop if you get a headache, eye strain, or double vision.
+      </p>
+    </div>
 
     <div class="figure">
       <div class="figure-head">
