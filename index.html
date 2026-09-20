@@ -563,6 +563,17 @@
   @media (max-width: 1040px) {
     .rail-drawer > summary { display: block; }
   }
+  /* A short viewport -- a phone in landscape, a small phone -- has to fit the
+     masthead, the field that starts a run, and a four-line verbatim footer that
+     is not ours to shrink. The masthead is the introduction and the field is the
+     control, so the introduction is what gives way. Only below 600px tall: on a
+     normal phone in portrait nothing here is short of room, and the display type
+     is the one place this design spends boldness. */
+  @media (max-height: 600px) {
+    .masthead { padding-block: 12px 10px; gap: 12px; }
+    h1 { font-size: 21px; }
+    .tagline { font-size: 12.5px; margin-top: 2px; }
+  }
   @media (max-width: 640px) {
     :root { --gutter: 16px; }
     .masthead { padding-block: 16px 14px; gap: 14px; }
@@ -754,17 +765,6 @@
 <!-- =============================== MODE 2 =============================== -->
 <main id="modeRsvp" class="hidden">
   <div class="stage">
-    <p class="framing">
-      This mode measures comprehension under RSVP (rapid serial visual presentation).
-      It does not measure, and is not known to improve, natural reading. Rayner et al.
-      (2016, <i>Psychological Science in the Public Interest</i>) concluded that RSVP
-      gains do not transfer to natural reading, for structural reasons: RSVP makes
-      regressions impossible (the 10&ndash;15% of eye movements that are backward
-      saccades, the brain's automatic repair mechanism when syntax or meaning fails to
-      integrate), and it abolishes parafoveal preview (pre-processing of the upcoming
-      word in peripheral vision, which natural reading depends on).
-    </p>
-
     <p class="note center hidden" id="feedMeta"></p>
     <div class="rsvp-field" id="rsvpField">
       <div class="rsvp-word" id="rsvpWord">Ready</div>
@@ -790,6 +790,17 @@
       <button class="resp-stop hidden" id="rsvpFocusNext">Next post</button>
       <button class="resp-stop" id="rsvpFocusStop">Stop</button>
     </div>
+
+    <p class="framing">
+      This mode measures comprehension under RSVP (rapid serial visual presentation).
+      It does not measure, and is not known to improve, natural reading. Rayner et al.
+      (2016, <i>Psychological Science in the Public Interest</i>) concluded that RSVP
+      gains do not transfer to natural reading, for structural reasons: RSVP makes
+      regressions impossible (the 10&ndash;15% of eye movements that are backward
+      saccades, the brain's automatic repair mechanism when syntax or meaning fails to
+      integrate), and it abolishes parafoveal preview (pre-processing of the upcoming
+      word in peripheral vision, which natural reading depends on).
+    </p>
 
     <div id="resultBox" class="figure hidden">
       <div class="figure-head"><h2>Score · speed paired with comprehension</h2></div>
@@ -2455,6 +2466,19 @@ el("qFalse").addEventListener("click", () => { if (keyResolver) keyResolver("j")
    combines them.
 =========================================================================== */
 
+// The field is the control that starts a run, and on a short viewport -- a
+// phone in landscape, a small phone -- the masthead can still leave it under
+// the fold, with the sticky footer capping the page so that nothing suggests
+// there is more below. Switching modes is an explicit request for that mode,
+// so its field comes to the reader when it is not already in view. Not done on
+// load: landing scrolled past the masthead would hide what the page is.
+function revealField(field) {
+  const r = field.getBoundingClientRect();
+  const footTop = document.querySelector("footer").getBoundingClientRect().top;
+  if (r.top >= 0 && r.bottom <= footTop) return;
+  field.scrollIntoView({ block: "center", behavior: REDUCED_MOTION.matches ? "auto" : "smooth" });
+}
+
 function showMode(which) {
   const gabor = which === "gabor";
   if (!gabor) abortSweep(); else if (rsvp.running) stopRsvp(true);
@@ -2464,6 +2488,7 @@ function showMode(which) {
   el("tabRsvp").setAttribute("aria-selected", !gabor);
   setPhase("idle");
   if (gabor) fitCSF();
+  revealField(el(gabor ? "fieldFrame" : "rsvpField"));
 }
 el("tabGabor").addEventListener("click", () => showMode("gabor"));
 el("tabRsvp").addEventListener("click", () => showMode("rsvp"));
