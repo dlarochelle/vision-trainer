@@ -136,6 +136,27 @@ Other docs:
 Governing project record, **read-only, never write back to it**:
 `~/life/PROJECTS/VISION_TRAINING_SPEED_READING_PROJECT_2026-09-19_e3ec5b.md`
 
+## Checks
+
+`tools/check.mjs` verifies the rules above that a machine can verify: the
+banned-word list, the verbatim footer disclaimer (and the CSS pinning it
+to full opacity during measurement), the single-file rule, no runtime
+fetching, the single theme, the quarantine hard stop, `#note` keeping its
+`keep` class, and that the inline script parses. No dependencies:
+
+```bash
+node tools/check.mjs
+```
+
+GitHub Actions runs it on every pull request into `main` and on every push
+to `main` (`.github/workflows/checks.yml`), and it is a required status
+check on `main`. Run it before you push.
+
+The banned words appear legitimately in this file, in `docs/EVIDENCE.md`
+and in `docs/PITCH.md`'s own check section — those are mentions, not uses.
+The checked surface is therefore `index.html` and the pitch script between
+the `---` rules in `docs/PITCH.md`.
+
 ## Working style
 
 - Keep the app demoable at every commit. Never leave it broken

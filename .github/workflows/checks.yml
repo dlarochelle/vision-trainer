@@ -1,0 +1,30 @@
+# The rules in AGENTS.md that a machine can verify — the verbatim footer
+# disclaimer, the banned-word list, the single-file rule, the measurement
+# quarantine, the deliberate single theme. AGENTS.md states the claims rules
+# as not subject to tradeoffs against scope, polish, or deadline; this is what
+# makes that true of a pull request nobody has time to read closely.
+#
+# The check script has no dependencies, so it runs locally the same way:
+#   node tools/check.mjs
+
+name: checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tools/check.mjs
