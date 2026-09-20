@@ -145,9 +145,19 @@
   <div class="stage">
     <canvas id="stim" width="720" height="720"></canvas>
     <p class="note center" id="note">
-      Two intervals, cued <b>1</b> and <b>2</b>. The flankers appear in both. The faint
-      central target appears in exactly one. Answer with
-      <kbd>F</kbd>/<kbd>&larr;</kbd> for interval 1, <kbd>J</kbd>/<kbd>&rarr;</kbd> for interval 2.
+      <b>What to look for.</b> Each trial shows two flashes in a row, labelled
+      <b>1</b> and <b>2</b> in the corner. Both flashes show the same two high-contrast
+      striped patches, one above centre and one below centre &mdash; ignore those, they
+      never change. In exactly <i>one</i> of the two flashes a third, much fainter
+      striped patch appears <i>in the gap between them</i>, at the centre of the screen.
+      Your only job is to say which flash had that faint centre patch.
+      <br>
+      Press <kbd>F</kbd>/<kbd>&larr;</kbd> if it was in flash <b>1</b>,
+      <kbd>J</kbd>/<kbd>&rarr;</kbd> if it was in flash <b>2</b>.
+      The centre patch gets fainter as you go, so you will reach a point where you
+      genuinely cannot see it &mdash; guess then. Guessing is expected; the staircase
+      needs your wrong answers to find your threshold.
+      <br>
       Stop if you get a headache, eye strain, or double vision.
     </p>
 
@@ -790,16 +800,6 @@ const RSVP_WARN_WPM = 350;
 // Short public-domain passages (traditional Aesop fables, retold).
 const PASSAGES = [
   {
-    title: "The Tortoise and the Hare",
-    text: "A hare was making fun of a tortoise for being so slow. The tortoise, tired of the teasing, challenged the hare to a race. The hare, sure of an easy win, dashed ahead and soon left the tortoise far behind. Halfway along the course, the hare decided there was time for a nap in the shade of a tree. Meanwhile the tortoise plodded on without stopping. When the hare woke and ran for the finish, he found the tortoise already there, resting calmly after her steady walk.",
-    questions: [
-      { q: "The tortoise proposed the race.", a: true },
-      { q: "The hare stopped to eat a meal partway through.", a: false },
-      { q: "The tortoise kept moving without stopping.", a: true },
-      { q: "The hare reached the finish line first.", a: false },
-    ]
-  },
-  {
     title: "The North Wind and the Sun",
     text: "The North Wind and the Sun argued about which of them was stronger. They agreed that whoever could make a passing traveler remove his cloak would be declared the winner. The North Wind went first and blew with all its might, but the harder it blew, the more tightly the traveler wrapped the cloak around himself. Then the Sun shone gently, and the traveler grew warm. Soon he unfastened the cloak, and before long he took it off entirely to rest in the shade. The Sun was declared the winner.",
     questions: [
@@ -1274,7 +1274,9 @@ function populatePassages(keepIndex = 0) {
   sel.value = String(Math.min(keepIndex, list.length - 1));
   const feed = feedMode();
   el("passageLabel").textContent = feed ? "Post" : "Passage";
-  el("passageCount").textContent = feed ? `${list.length} cached` : "";
+  el("passageCount").textContent = feed
+    ? `${list.length} cached \u00b7 pick any`
+    : `${list.length} passages \u00b7 pick any`;
   el("feedRow").classList.toggle("hidden", !feed);
   el("feedNote").classList.toggle("hidden", !feed);
   updateFeedMeta();
@@ -1291,7 +1293,17 @@ function updateFeedMeta() {
 
 el("source").addEventListener("change", () => { if (rsvp.running) stopRsvp(true); populatePassages(0); });
 el("passage").addEventListener("change", updateFeedMeta);
-populatePassages(0);
+
+// Open on the feed rather than the fables, and specifically on the first Apify
+// snapshot post, so the app lands on newsroom prose instead of a fable.
+// FEED_POSTS comes first in FEED_ALL, so the snapshot starts at its length.
+const FIRST_SNAPSHOT_INDEX = FEED_POSTS.length;
+if (FEED_ALL.length > FIRST_SNAPSHOT_INDEX) {
+  el("source").value = "feed";
+  populatePassages(FIRST_SNAPSHOT_INDEX);
+} else {
+  populatePassages(0);
+}
 
 // Advance to the next feed post and start it. Wraps at the end. Any run in
 // progress is stopped first, so the presenter can skim the feed quickly.
