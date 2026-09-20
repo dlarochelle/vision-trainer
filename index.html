@@ -464,15 +464,19 @@
     margin-top: 10px;
   }
   /* The mapping is instruction text for an input method a phone does not have,
-     so it is shown only where a keyboard is plausible: above the focus-mode
-     breakpoint and on a fine pointer. It carries its own `margin-right: auto`
-     rather than the row using `space-between`, so when the hint is absent Stop
-     stays at the end of the row instead of sliding to the start. */
+     so it is shown only where a keyboard is plausible. The test is the pointer,
+     not the viewport: a laptop in a narrow window is below the focus-mode
+     breakpoint and still answers with F and J, so gating on width as well would
+     take the hint away from the keyboard it describes. A coarse pointer is the
+     signal that there is no keyboard to describe. It carries its own
+     `margin-right: auto` rather than the row using `space-between`, so when the
+     hint is absent Stop stays at the end of the row instead of sliding to the
+     start. */
   .resp-hint {
     display: none; margin-right: auto;
     font-family: var(--mono); font-size: 11px; color: var(--dimmer); letter-spacing: .06em;
   }
-  @media (min-width: 1041px) and (pointer: fine) {
+  @media (pointer: fine) {
     .resp-hint { display: inline; }
   }
   .resp-stop {
