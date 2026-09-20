@@ -18,6 +18,8 @@
      background explicitly, so it holds on any host ground.
      ====================================================================== */
   :root {
+    /* Replaced at runtime with the fixed footer's measured height. */
+    --focus-footer: 96px;
     /* Neutrals are biased slightly toward the accent's blue, so the greys
        read as chosen rather than inherited. */
     --void:      #07090e;
@@ -401,11 +403,9 @@
   }
   .hero-metric .v { font-size: 40px; }
   .hero-metric .v[data-idle="true"] { font-size: 24px; }
-  body[data-phase="idle"] .field-frame::after {
-    content: ""; position: absolute; inset: 18px; border-radius: var(--r-sm);
-    pointer-events: none;
-    background: radial-gradient(closest-side, transparent 55%, rgba(7,9,14,.55) 100%);
-  }
+  /* The idle vignette that used to sit here is gone. It was decoration over
+     decoration; over a demo of the real stimulus it dimmed the two outer
+     spots the viewer is being asked to count. */
 
   /* Entrance: from a visible resting state, so the first frame is readable. */
   @keyframes rise { from { opacity: .001; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -417,10 +417,110 @@
   .stage > *:nth-child(3) { animation-delay: .12s; }
   .rail { animation-delay: .1s; }
 
+  /* ------------------------------------------------- start control + responses */
+  .field-start {
+    position: absolute; inset: 10px; z-index: 4;
+    display: grid; place-items: end center; padding-bottom: 26px;
+    background: transparent; border: 0; cursor: pointer;
+  }
+  .field-start span {
+    background: rgba(7,9,14,.86); border: 1px solid var(--accent); color: var(--ink);
+    padding: 12px 26px; border-radius: 999px;
+    font-size: 14px; font-weight: 600; letter-spacing: .04em;
+  }
+  body[data-phase="idle"] .field-start span { box-shadow: 0 0 24px -6px rgba(110,168,255,.7); }
+  body:not([data-phase="idle"]) .field-start { display: none; }
+
+  .responses { display: none; width: 100%; max-width: 520px; text-align: center; }
+  body[data-phase="arming"] .responses,
+  body[data-phase="measuring"] .responses { display: block; }
+  .resp-q { margin: 0 0 10px; font-size: 14px; color: var(--ink); }
+  .resp-row { display: flex; gap: 12px; }
+  .resp {
+    flex: 1; min-height: 64px; font-family: var(--mono); font-size: 24px; font-weight: 600;
+    color: var(--ink); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: var(--r-md); cursor: pointer;
+  }
+  .resp:disabled { opacity: .3; cursor: default; }
+  .resp:not(:disabled):active { background: var(--accent); color: #061020; }
+  .resp-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-top: 10px;
+  }
+  .resp-hint { font-family: var(--mono); font-size: 11px; color: var(--dimmer); letter-spacing: .06em; }
+  .resp-stop {
+    background: none; border: 0; color: var(--dim); cursor: pointer;
+    font-size: 12px; text-decoration: underline; padding: 4px;
+  }
+  .focus-bar { display: none; }
+  body.focus .focus-bar {
+    display: flex; justify-content: flex-end; width: 100%; max-width: 860px;
+  }
+
+  /* --------------------------------------------------------------- focus mode */
+  /* A timed two-interval task cannot share a scroll container with prose. Below
+     the two-column breakpoint the rail stacks under a 600px canvas, so the
+     control you press and the field you must watch cannot be on screen at once
+     and the first flash is missed. For the duration of a run the field is
+     lifted out of the page flow entirely and the page behind it is locked.
+     The footer disclaimer is fixed above this overlay and is never covered. */
+  body.focus { overflow: hidden; }
+  body.focus .masthead, body.focus .rail { display: none; }
+  body.focus .stage {
+    position: fixed; inset: 0; z-index: 50; margin: 0;
+    /* The footer is fixed above this overlay and its text is verbatim, so its
+       height is not ours to choose: it wraps to four lines on a phone. JS
+       measures it into --focus-footer rather than letting a hand-written
+       reserve guess low and put the controls behind it. */
+    padding: 12px var(--gutter) calc(var(--focus-footer) + 16px);
+    gap: 16px; background: var(--void);
+    /* Centred when it fits, scrollable when it does not. `safe center` keeps
+       the overflow off the start edge, which a plain `center` makes
+       unreachable; browsers without it drop the line and keep the plain
+       `center` above. Never `hidden`: in landscape the overflow was the stop
+       control, and clipping it left a run with no way out. */
+    justify-content: center;
+    justify-content: safe center;
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+  body.focus .stage > *:not(.field-frame):not(.responses):not(.rsvp-field):not(#qBox):not(.focus-bar),
+  body.focus #note { display: none; }   /* #note is styled by id and outranks the line above */
+  /* The word field has a fixed height in the page so the layout cannot jump
+     between a short word and a long one. Given the whole screen it can have
+     more of it. */
+  body.focus .rsvp-field { height: auto; min-height: min(46vh, 320px); }
+  /* While questions are up the word field holds the literal word "Questions"
+     and nothing else. In the overlay that is 172px of dead space between the
+     reader and the answer buttons, and in landscape it was the difference
+     between the controls fitting and being pushed under the footer. */
+  body.focus[data-asking="1"] .rsvp-field { display: none; }
+  /* No max-height here on purpose. It used to cap the canvas independently of
+     the backing store fitField had just chosen, and the two disagreed on any
+     viewport under 500px tall: a 240px store displayed at 115px, which is the
+     silent downscale this whole mechanism exists to prevent. fitField now
+     picks one number from width AND height and writes it as an inline width;
+     if the floor makes that taller than the viewport, the overlay scrolls
+     rather than the stimulus shrinking behind the app's back. */
+  body.focus footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; }
+
   /* --------------------------------------------------------------- responsive */
   @media (max-width: 1040px) {
     main { grid-template-columns: minmax(0, 1fr); }
     .rail { position: static; }
+  }
+  /* The rail is reference material, not part of the task. Where it cannot sit
+     beside the field it collapses, so it stops pushing the task off screen.
+     Opened by JS on wide screens, where the summary is hidden. */
+  .rail-drawer > summary {
+    display: none; cursor: pointer; list-style: none;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--dim); padding: 4px 0 12px;
+  }
+  .rail-drawer > summary::-webkit-details-marker { display: none; }
+  .rail-drawer > summary::after { content: " +"; }
+  .rail-drawer[open] > summary::after { content: " \2212"; }
+  @media (max-width: 1040px) {
+    .rail-drawer > summary { display: block; }
   }
   @media (max-width: 640px) {
     :root { --gutter: 16px; }
@@ -464,30 +564,47 @@
 <!-- =============================== MODE 1 =============================== -->
 <main id="modeGabor">
   <div class="stage">
-    <div class="field-frame">
+    <div class="field-frame" id="fieldFrame">
       <canvas id="stim" width="600" height="600"></canvas>
       <div class="scale-flag" id="scaleFlag">display scaled</div>
+      <!-- The field is the start control. On a phone the rail stacks below a
+           600px canvas, so a button down there cannot be pressed and watched at
+           the same time; the thing you are about to look at is the thing you
+           press. -->
+      <button class="field-start" id="fieldStart"><span>Start</span></button>
     </div>
     <p class="note center keep" id="fieldCaption"></p>
 
+    <!-- Response controls. Present for the whole run so the layout never jumps,
+         enabled only in the window after the second flash, so an early tap
+         cannot be swallowed. The keyboard mapping is a hint, not the interface. -->
+    <div class="responses keep" id="responses">
+      <p class="resp-q">Which flash had three?</p>
+      <div class="resp-row">
+        <button class="resp" id="resp1" disabled>1</button>
+        <button class="resp" id="resp2" disabled>2</button>
+      </div>
+      <div class="resp-foot">
+        <span class="resp-hint">F / &larr; &nbsp;&middot;&nbsp; J / &rarr;</span>
+        <button class="resp-stop" id="respStop">Stop</button>
+      </div>
+    </div>
+
     <div class="note keep" id="note">
       <p>
-        <span class="brief-head">What to look for</span>
-        Each trial shows two flashes in a row, labelled
-        <b>1</b> and <b>2</b> in the corner. Both flashes show the same two high-contrast
-        striped patches, one above centre and one below centre &mdash; ignore those, they
-        never change. In exactly <i>one</i> of the two flashes a third, much fainter
-        striped patch appears <i>in the gap between them</i>, at the centre of the screen.
-        Your only job is to say which flash had that faint centre patch.
+        <span class="brief-head">How it works</span>
+        You will see two quick flashes, one after the other. One flash has
+        <b>two</b> striped spots. The other has <b>three</b> &mdash; the extra one sits in
+        the middle, and it is faint. Say which flash had three.
       </p>
       <p class="brief-act">
-        Press <kbd>F</kbd>/<kbd>&larr;</kbd> if it was in flash <b>1</b>,
-        <kbd>J</kbd>/<kbd>&rarr;</kbd> if it was in flash <b>2</b>.
+        Tap <b>1</b> or <b>2</b> &mdash; or press <kbd>F</kbd>/<kbd>&larr;</kbd> for flash 1,
+        <kbd>J</kbd>/<kbd>&rarr;</kbd> for flash 2.
       </p>
       <p>
-        The centre patch gets fainter as you go, so you will reach a point where you
-        genuinely cannot see it &mdash; guess then. Guessing is expected; the staircase
-        needs your wrong answers to find your threshold.
+        The middle spot gets fainter as you go, so you will reach a point where you
+        cannot see it at all. Not sure? Guess &mdash; that is expected, and a guess still
+        counts. Wrong answers are how the test finds your limit.
       </p>
       <p class="brief-stop">
         Stop if you get a headache, eye strain, or double vision.
@@ -518,10 +635,12 @@
   </div>
 
   <aside class="rail">
+    <details id="railDrawer" class="rail-drawer">
+    <summary>Settings and live readouts</summary>
     <section>
       <h2>Run</h2>
       <div class="row" style="margin:12px 0 4px">
-        <button class="btn" id="start">Start sweep</button>
+        <button class="btn" id="start">Start</button>
         <button class="btn secondary" id="abort" disabled>Abort</button>
       </div>
 
@@ -579,6 +698,7 @@
         one display, not across displays.
       </p>
     </section>
+    </details>
   </aside>
 </main>
 
@@ -598,7 +718,11 @@
 
     <p class="note center hidden" id="feedMeta"></p>
     <div class="rsvp-field" id="rsvpField">
-      <div class="rsvp-word" id="rsvpWord">Press Start</div>
+      <div class="rsvp-word" id="rsvpWord">Ready</div>
+      <!-- Same reasoning as the stimulus field in the other mode: the thing you
+           are about to read is the thing you press, so starting a run cannot
+           scroll the first word out of view. -->
+      <button class="field-start" id="rsvpFieldStart"><span>Start</span></button>
     </div>
 
     <div id="qBox" class="hidden" style="text-align:center">
@@ -608,6 +732,12 @@
         <button class="btn" id="qTrue">True &nbsp;<kbd>F</kbd>/<kbd>&larr;</kbd></button>
         <button class="btn" id="qFalse">False &nbsp;<kbd>J</kbd>/<kbd>&rarr;</kbd></button>
       </div>
+    </div>
+
+    <!-- Focus mode hides the rail, and with it the Stop button. Reading and
+         answering need no other controls, so this bar carries only that one. -->
+    <div class="focus-bar" id="rsvpFocusBar">
+      <button class="resp-stop" id="rsvpFocusStop">Stop</button>
     </div>
 
     <div id="resultBox" class="figure hidden">
@@ -721,7 +851,16 @@ const FLANKER_SEPARATION_LAMBDA = 3;
 const INTERVAL_MS = 150;
 const ISI_MS = 500;
 const PRE_TRIAL_MS = 500;   // "get ready" blank before interval 1
-const FEEDBACK_MS = 400;    // correct/incorrect flash after the response
+const FEEDBACK_MS = 400;    // right/wrong flash after the response
+
+// Practice gate. Three trials at a contrast nobody near threshold, run before
+// the first staircase of a session. It gates the instructions, not the
+// observer: someone who has misread the brief fails here, where the cost is a
+// replay of the demo, instead of filing a floor threshold in the real data.
+// Practice trials never touch a staircase and are never recorded.
+const PRACTICE_TRIALS = 3;
+const PRACTICE_CONTRAST = 0.45;
+const PRACTICE_FEEDBACK_MS = 950;
 
 // Staircase rule. 2-down-1-up converges on 70.7% correct. In a two-interval
 // forced-choice task that is d' = sqrt(2) * z(0.707) ~= 0.77 (the often-quoted
@@ -821,8 +960,8 @@ function renderField(ctx, canvas, patches) {
   for (const p of patches) {
     if (p.contrast <= 0) continue;
     const radius = Math.ceil(p.sigma * ENVELOPE_CUTOFF_SIGMA);
-    // Orientation is per-patch, defaulting to the task orientation. Only the
-    // decorative idle field ever varies it; every measured trial uses the
+    // Orientation is per-patch, defaulting to the task orientation. Nothing
+    // varies it since the decorative lattice was removed; every measured trial uses the
     // ORIENTATION_DEG constant, so the task itself is unchanged.
     const theta = (p.orientationDeg == null ? ORIENTATION_DEG : p.orientationDeg) * Math.PI / 180;
     const cosT = Math.cos(theta), sinT = Math.sin(theta);
@@ -890,6 +1029,71 @@ function renderRatio() {
   return shown > 0 ? shown / canvas.width : 1;
 }
 
+// The field's backing store is sized to the space the layout actually gives
+// it, so the browser is never asked to downscale it. A downscale silently
+// raises the angular frequency the observer receives — on a 375 px phone the
+// fixed 600 px store was being shown at 0.51x, which is most of an octave.
+// Reported either way by renderRatio, but better not to incur it.
+//
+// Never resized mid-run: reallocating the buffer clears the canvas, which in
+// a trial would blank a flash. Callers during a run pass force only at points
+// where no trial is in flight.
+const FIELD_MAX_PX = 600;
+const FIELD_MIN_PX = 240;
+function refitIdleField() {
+  // The hold after a run keeps the closing message on the canvas — "Aborted",
+  // or the one line telling a user why the practice gate stopped them. A
+  // resize clears the backing store and drawIdle would paint over it, and
+  // leaving focus mode changes the layout, so the hold used to lose that race
+  // every time. Defer the refit to the moment the hold expires instead.
+  if (idleHoldTimer) return;
+  fitField();
+  if (document.body.dataset.phase === "idle") drawIdle();
+}
+
+// Measured from the stage, not from the canvas and not from the frame. The
+// canvas's width is what this function sets, and the frame is centred in a
+// flex column so it shrink-wraps the canvas — reading either back would
+// ratchet the field smaller on every refit and never let it grow again.
+// Vertical space the overlay spends on things that are not the field: the top
+// padding, the gap, and the response controls under it. The footer is measured
+// separately because its text is verbatim and wraps differently by width.
+const FOCUS_CONTROLS_PX = 160;
+
+// The fixed footer's real height, published to CSS as --focus-footer so the
+// overlay's bottom padding and this calculation cannot drift apart. A
+// hand-written 96px reserve was 27px short of the four-line disclaimer a
+// phone renders, which is what put the stop control behind it.
+function syncFocusReserve() {
+  const f = document.querySelector("footer");
+  const px = f ? Math.ceil(f.getBoundingClientRect().height) : 96;
+  document.documentElement.style.setProperty("--focus-footer", px + "px");
+  return px;
+}
+
+function fitField(force) {
+  if (sweep.running && !force) return;
+  const frame = canvas.parentElement;
+  const cs = getComputedStyle(frame);
+  const chrome = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+               + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+  const host = frame.parentElement;
+  const hs = getComputedStyle(host);
+  let avail = host.clientWidth - parseFloat(hs.paddingLeft) - parseFloat(hs.paddingRight) - chrome;
+  if (document.body.classList.contains("focus")) {
+    avail = Math.min(avail, window.innerHeight - syncFocusReserve() - FOCUS_CONTROLS_PX);
+  }
+  if (!(avail > 0)) return;   // the stage is hidden; nothing to fit
+  const size = Math.max(FIELD_MIN_PX, Math.min(FIELD_MAX_PX, Math.round(avail)));
+  // The rendered width is pinned to the backing store, so the browser is never
+  // left to pick a display size of its own and quietly downscale. Height stays
+  // auto: the store is square, and an inline height would fight max-width and
+  // distort the aspect on a viewport narrower than the floor.
+  canvas.style.width = size + "px";
+  if (canvas.width === size) return;
+  canvas.width = size; canvas.height = size;
+}
+
 function drawFrame(geo, { showTarget, targetContrast, phaseDeg, cue, cueColor }) {
   const cx = canvas.width / 2, cy = canvas.height / 2;
   const theta = ORIENTATION_DEG * Math.PI / 180;
@@ -913,10 +1117,16 @@ function drawBlank(cue, cueColor) {
   drawCue(cue, cueColor);
 }
 
+// Cues carry sentences now ("Flash 2 had three"), not just an interval number,
+// so the type shrinks to fit rather than running off the field.
 function drawCue(text, color) {
   if (!text) return;
-  ctx.font = "600 30px \"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace";
+  const font = (px) => "600 " + px + "px \"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace";
+  const max = canvas.width - 32;
+  let size = 30;
   ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.font = font(size);
+  while (size > 14 && ctx.measureText(text).width > max) { size -= 2; ctx.font = font(size); }
   ctx.fillStyle = color || "rgb(20,20,20)";
   ctx.fillText(text, 16, 8);
 }
@@ -993,6 +1203,11 @@ function waitKey(map) {
 }
 document.addEventListener("keydown", (e) => {
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
+  if (e.key === "Escape" && (sweep.running || rsvp.running)) {
+    e.preventDefault();
+    if (sweep.running) abortSweep(); else stopRsvp(true);
+    return;
+  }
   if (keyResolver) { if (keyResolver(e.key)) e.preventDefault(); return; }
   // No response wait is active. In RSVP mode with the feed source, N and the
   // right arrow skip to the next post; preventDefault only when consumed.
@@ -1066,105 +1281,124 @@ function isGaborMode() { return !el("modeGabor").classList.contains("hidden"); }
 // sweep the quarantine lifts at once, so the freshly plotted chart is readable
 // at full strength, while the canvas keeps its closing message a moment longer.
 // Starting anything else cancels the hold, so it cannot fire into a later run.
-let ambientHoldTimer = 0;
-function holdAmbient(ms) {
-  clearTimeout(ambientHoldTimer);
-  ambientHoldTimer = 0;
-  stopAmbient();                       // nothing may paint over the held message
-  ambientHoldTimer = setTimeout(() => {
-    ambientHoldTimer = 0;
-    if (document.body.dataset.phase === "idle") startAmbient();
+let idleHoldTimer = 0;
+function holdIdleField(ms) {
+  clearTimeout(idleHoldTimer);
+  idleHoldTimer = 0;
+  stopIdleField();                       // nothing may paint over the held message
+  idleHoldTimer = setTimeout(() => {
+    idleHoldTimer = 0;
+    // Any refit that arrived during the hold was skipped to protect the
+    // message; take it now, before the field paints again.
+    if (document.body.dataset.phase === "idle") { fitField(); startIdleField(); }
     updateFieldCaption();
   }, ms);
   updateFieldCaption();
 }
-function clearAmbientHold() { clearTimeout(ambientHoldTimer); ambientHoldTimer = 0; }
+function clearIdleHold() { clearTimeout(idleHoldTimer); idleHoldTimer = 0; }
 
 function setPhase(phase) {
   document.body.dataset.phase = phase;
-  if (phase === "idle") startAmbient();
-  else { clearAmbientHold(); stopAmbient(); }
+  if (phase === "idle") startIdleField();
+  else { clearIdleHold(); stopIdleField(); }
   updateFieldCaption();
 }
 
 function updateFieldCaption() {
   const cap = el("fieldCaption");
   if (!cap) return;
-  if (document.body.dataset.phase !== "idle" || ambientHoldTimer) { cap.textContent = ""; return; }
-  // The cinematic idle field is decoration, not the task. Say so, rather than
-  // letting a viewer take an ornamental lattice for the measured stimulus.
-  // The static fallback draws the real stimulus; the animated field does not.
-  cap.textContent = ambientRaf
-    ? "Idle field — decorative. The measured stimulus is the three-patch collinear array; press Start sweep to see it."
-    : "Preview — the measured stimulus: two collinear flankers and a faint central target.";
+  if (document.body.dataset.phase !== "idle" || idleHoldTimer) { cap.textContent = ""; return; }
+  // Both branches show the real stimulus now, so the caption's job is no longer
+  // to disown an ornament. It is to say that the demo is easier than the test,
+  // which is the one way a demo at 0.6 contrast could still mislead.
+  cap.textContent = demoRunning
+    ? "Demo — the real task, slowed down and far brighter than the test will be."
+    : "The stimulus: two striped spots, and a faint third one in the middle.";
 }
 
 /* ---------------------------------------------------------------------------
-   Ambient stimulus field. Both treatments draw through the same Gabor
-   renderer the task uses, so the ornament is made of the subject matter.
+   The idle field: an instructional demo, not an ornament.
+
+   What used to sit here was a decorative Gabor lattice carrying a caption
+   saying it was decorative. A reviewer read that caption and still took the
+   lattice for the task, which is the one thing the caption existed to prevent.
+   Static diagrams of a two-interval task fail the same way, because what has
+   to be understood is a sequence, not a picture.
+
+   So the idle field plays the real trial: same renderer, same geometry, same
+   two intervals, at a contrast far above threshold and slowed down, ending on
+   the answer. The only honest caption for it is that it is easier than the
+   test, and that line is on screen.
 --------------------------------------------------------------------------- */
 
-const AMBIENT_FPS = 24;              // enough for smooth drift, cheap enough to idle at
-const AMBIENT_LAMBDA_PX = 30;        // decorative lattice only; unrelated to task geometry
-const AMBIENT_SIGMA_PX = 26;
-const AMBIENT_LATTICE = 4;           // 4 x 4 patches
+// Well above any plausible threshold: the demo is a picture of the task, not
+// a measurement, and nothing it produces is recorded.
+const DEMO_CONTRAST = 0.6;
+// Slowed from the measured chronometry so the two flashes can be counted
+// rather than merely registered.
+const DEMO_INTERVAL_MS = 620;
+const DEMO_ISI_MS = 520;
+const DEMO_ANSWER_MS = 1700;
+const DEMO_GAP_MS = 900;
 
-// A lattice of Gabors, orientations turning, contrast crossing the field as a
-// travelling wave. Decorative, and captioned as such on screen: it is not the
-// three-patch array the task measures.
-function ambientPatches(t) {
-  const W = canvas.width, H = canvas.height;
-  const N = AMBIENT_LATTICE, step = W / N, out = [];
-  for (let i = 0; i < N; i++) {
-    for (let j = 0; j < N; j++) {
-      const cx = step * (i + 0.5), cy = step * (j + 0.5);
-      const diag = (cx + cy) / (W + H);
-      const wave = 0.5 - 0.5 * Math.cos((t / 2400 - diag) * Math.PI * 2);
-      out.push({
-        cx, cy, lambda: AMBIENT_LAMBDA_PX, sigma: AMBIENT_SIGMA_PX,
-        contrast: 0.05 + wave * 0.5,
-        orientationDeg: (t / 60 + (i - j) * 22) % 360,
-        phaseDeg: (t / 30 + i * 47 + j * 29) % 360,
-      });
-    }
+let demoId = 0, demoRunning = false;
+
+// Ring drawn around the target on the answer frame only. Sized from the
+// envelope so it clears the patch at any magnification.
+function ringTarget(geo) {
+  const r = geo.sigma * ENVELOPE_CUTOFF_SIGMA + 8;
+  ctx.strokeStyle = "rgb(28,58,132)"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(canvas.width / 2, canvas.height / 2, r, 0, Math.PI * 2); ctx.stroke();
+}
+
+async function demoLoop() {
+  const my = ++demoId;
+  demoRunning = true;
+  const alive = () => demoId === my;
+  while (alive()) {
+    const geo = updateGeometryReadout();
+    const targetInterval = Math.random() < 0.5 ? 1 : 2;
+    const phaseDeg = Math.random() * 360;
+    if (!await presentPair(geo, {
+      targetInterval, contrast: DEMO_CONTRAST, phaseDeg, alive,
+      readyCue: "Demo", preMs: DEMO_GAP_MS,
+      intervalMs: DEMO_INTERVAL_MS, isiMs: DEMO_ISI_MS,
+    })) break;
+    drawFrame(geo, { showTarget: true, targetContrast: DEMO_CONTRAST, phaseDeg,
+                     cue: "Flash " + targetInterval + " had three" });
+    ringTarget(geo);
+    await sleep(DEMO_ANSWER_MS);
   }
-  return out;
+  if (demoId === my) demoRunning = false;
 }
 
-let ambientRaf = 0, ambientLast = -1e9;
-function ambientFrame(ts) {
-  ambientRaf = requestAnimationFrame(ambientFrame);
-  if (ts - ambientLast < 1000 / AMBIENT_FPS) return;
-  ambientLast = ts;
-  renderField(ctx, canvas, ambientPatches(ts));
-}
-
-// The mode check comes first and stops a loop that is already running:
-// entering RSVP mode must not leave this animating against a hidden canvas.
-// Every exit refreshes the caption, so it always describes what is actually
-// on the canvas: the lattice, the real stimulus, or nothing during a hold.
-function startAmbient() {
-  if (!isGaborMode()) { stopAmbient(); return; }
-  if (ambientHoldTimer) { updateFieldCaption(); return; }
-  if (REDUCED_MOTION.matches || document.hidden) { stopAmbient(); drawStaticIdle(); return; }
-  if (!ambientRaf) ambientRaf = requestAnimationFrame(ambientFrame);
+function startIdleField() {
+  if (!isGaborMode()) { stopIdleField(); return; }
+  if (idleHoldTimer) { updateFieldCaption(); return; }
+  // Reduced motion and hidden tabs get the static draw of the same stimulus.
+  // Keep this pairing honest: both sides must show the real three-patch array,
+  // and the caption must say which one is on screen.
+  if (REDUCED_MOTION.matches || document.hidden) { stopIdleField(); drawStaticIdle(); return; }
+  if (!demoRunning) demoLoop();
   updateFieldCaption();
 }
-function stopAmbient() {
-  if (ambientRaf) { cancelAnimationFrame(ambientRaf); ambientRaf = 0; }
+
+function stopIdleField() {
+  demoId++;
+  demoRunning = false;
   updateFieldCaption();
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) stopAmbient();
-  else if (document.body.dataset.phase === "idle") startAmbient();
+  if (document.hidden) stopIdleField();
+  else if (document.body.dataset.phase === "idle") startIdleField();
 });
-// Re-entering startAmbient picks the right branch for the new setting, and
+// Re-entering startIdleField picks the right branch for the new setting, and
 // each branch leaves the caption describing what is actually on the canvas.
 REDUCED_MOTION.addEventListener("change", () => {
   if (document.body.dataset.phase !== "idle") return;
-  stopAmbient();
-  startAmbient();
+  stopIdleField();
+  startIdleField();
 });
 
 function drawStaticIdle(geo) {
@@ -1174,7 +1408,7 @@ function drawStaticIdle(geo) {
 
 function drawIdle() {
   const geo = updateGeometryReadout();
-  if (ambientRaf) return;          // the ambient loop paints its own frames
+  if (demoRunning) return;         // the demo loop paints its own frames
   drawStaticIdle(geo);
 }
 
@@ -1183,6 +1417,97 @@ function drawIdle() {
 // not move focus to a button on click).
 function blurControls() {
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+
+/* ---------------------------------------------------------------------------
+   One two-interval trial, drawn. The demo, the practice gate and the measured
+   staircase all present through this, so what a user is shown in the demo and
+   passes in practice is exactly the trial they are then measured on; only the
+   contrast and the chronometry differ. `alive` lets a caller be cancelled
+   mid-trial instead of painting over whatever started next.
+--------------------------------------------------------------------------- */
+async function presentPair(geo, o) {
+  const alive = o.alive || (() => true);
+  const intervalMs = o.intervalMs || INTERVAL_MS;
+  const isiMs = o.isiMs || ISI_MS;
+  drawBlank(o.readyCue || "Ready");
+  await sleep(o.preMs || PRE_TRIAL_MS);                              if (!alive()) return false;
+  drawFrame(geo, { showTarget: o.targetInterval === 1, targetContrast: o.contrast, phaseDeg: o.phaseDeg, cue: "1" });
+  await sleep(intervalMs);                                           if (!alive()) return false;
+  drawBlank("");
+  await sleep(isiMs);                                                if (!alive()) return false;
+  drawFrame(geo, { showTarget: o.targetInterval === 2, targetContrast: o.contrast, phaseDeg: o.phaseDeg, cue: "2" });
+  await sleep(intervalMs);
+  return alive();
+}
+
+// The response window. The buttons sit on screen for the whole run so the
+// layout never shifts under a thumb, but they only accept a press here, after
+// the second flash, so an early tap cannot be swallowed by the interval.
+async function waitInterval() {
+  document.body.dataset.respond = "1";
+  el("resp1").disabled = false; el("resp2").disabled = false;
+  try {
+    return await waitKey(INTERVAL_KEYS);
+  } finally {
+    document.body.dataset.respond = "0";
+    el("resp1").disabled = true; el("resp2").disabled = true;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Focus mode. Below the two-column breakpoint the rail — and every control in
+   it — stacks underneath a 600 px canvas, so pressing Start scrolls the field
+   out of view and the first flash is missed. Moving the button only fixes the
+   breakpoint it was moved on; the actual defect is that a timed task is living
+   in a scrolling document. For the length of a run the field is lifted out of
+   the flow and the page is locked behind it. The footer disclaimer is fixed
+   above the overlay and stays visible throughout, as it must.
+--------------------------------------------------------------------------- */
+const FOCUS_MQ = window.matchMedia("(max-width: 1040px)");
+
+// `target` is the surface the run happens on: the stimulus frame in one mode,
+// the word field in the other. Only the stimulus needs a refit — fitField
+// reads zero width while its stage is hidden and returns without acting.
+function enterFocus(target) {
+  syncFocusReserve();
+  if (FOCUS_MQ.matches) document.body.classList.add("focus");
+  target.scrollIntoView({ block: "center" });
+  // The overlay gives the field a different width than the page did. Refit
+  // before the first frame is drawn; no trial is in flight yet.
+  fitField(true);
+}
+function exitFocus() { document.body.classList.remove("focus"); fitField(true); }
+
+/* ---------------------------------------------------------------------------
+   Practice gate: three trials, feedback after each, all three required. On a
+   miss the run stops and the demo replays rather than the staircase starting
+   under a misunderstanding. Passed once, it is not asked again this session.
+--------------------------------------------------------------------------- */
+let practicePassed = false;
+
+async function runPractice(my) {
+  const alive = () => runId === my;
+  let right = 0;
+  for (let i = 1; i <= PRACTICE_TRIALS; i++) {
+    const geo = updateGeometryReadout();
+    const targetInterval = Math.random() < 0.5 ? 1 : 2;
+    const phaseDeg = Math.random() * 360;
+    if (!await presentPair(geo, {
+      targetInterval, contrast: PRACTICE_CONTRAST, phaseDeg, alive,
+      readyCue: "Practice " + i + " of " + PRACTICE_TRIALS,
+    })) return false;
+    drawBlank("Which flash had three?");
+    const resp = await waitInterval();
+    if (!alive() || resp === null) return false;
+    const ok = resp === targetInterval;
+    if (ok) right++;
+    drawBlank((ok ? "Yes — flash " : "No — flash ") + targetInterval + " had three",
+              ok ? "rgb(30,110,60)" : "rgb(150,40,40)");
+    await sleep(PRACTICE_FEEDBACK_MS);
+    if (!alive()) return false;
+  }
+  return right === PRACTICE_TRIALS;
 }
 
 async function runSweep() {
@@ -1194,8 +1519,15 @@ async function runSweep() {
   el("lvLast").textContent = "—";
   el("lvLast").style.color = "";
   drawCSF();
+  enterFocus(el("fieldFrame"));
 
   setPhase("arming");
+  if (!practicePassed) {
+    const passed = await runPractice(my);
+    if (runId !== my) return;
+    if (!passed) { finishSweep("Not quite — watch the demo once more"); return; }
+    practicePassed = true;
+  }
   for (const c of ["3", "2", "1"]) {
     drawBlank(c);
     await sleep(ARM_STEP_MS);
@@ -1228,26 +1560,17 @@ async function runSweep() {
       const phaseDeg = Math.random() * 360;
       const contrast = stair.contrast;
 
-      drawBlank("Ready");                                   await sleep(PRE_TRIAL_MS);
-      if (runId !== my) return;
-      drawFrame(geo, { showTarget: targetInterval === 1, targetContrast: contrast, phaseDeg, cue: "1" });
-      await sleep(INTERVAL_MS);
-      if (runId !== my) return;
-      drawBlank("");                                        await sleep(ISI_MS);
-      if (runId !== my) return;
-      drawFrame(geo, { showTarget: targetInterval === 2, targetContrast: contrast, phaseDeg, cue: "2" });
-      await sleep(INTERVAL_MS);
-      if (runId !== my) return;
-      drawBlank("Which interval?  1 (F)  or  2 (J)");
+      if (!await presentPair(geo, { targetInterval, contrast, phaseDeg, alive: () => runId === my })) return;
+      drawBlank("Which flash had three?");
 
-      const resp = await waitKey(INTERVAL_KEYS);
+      const resp = await waitInterval();
       if (runId !== my || resp === null) return;
       const correct = resp === targetInterval;
       stair.update(correct);
-      el("lvLast").textContent = correct ? "correct" : "incorrect";
+      el("lvLast").textContent = correct ? "right" : "wrong";
       el("lvLast").style.color = correct ? "var(--good)" : "var(--bad)";
       updateLive();
-      drawBlank(correct ? "Correct" : "Incorrect", correct ? "rgb(30,110,60)" : "rgb(150,40,40)");
+      drawBlank(correct ? "Yes" : "No", correct ? "rgb(30,110,60)" : "rgb(150,40,40)");
       await sleep(FEEDBACK_MS);
       if (runId !== my) return;
     }
@@ -1265,11 +1588,14 @@ async function runSweep() {
     drawCSF();
   }
 
-  finishSweep("Sweep complete");
+  finishSweep("Done");
 }
 
 function finishSweep(msg) {
   sweep.running = false; sweep.block = null; sweep.stair = null;
+  exitFocus();
+  document.body.dataset.respond = "0";
+  el("resp1").disabled = true; el("resp2").disabled = true;
   el("start").disabled = false; el("abort").disabled = true;
   el("dist").disabled = false; el("scale").disabled = false;
   drawBlank(msg);
@@ -1277,7 +1603,7 @@ function finishSweep(msg) {
   // The sweep is over, so the quarantine lifts immediately and the finished
   // CSF figure is readable at full strength. Only the ambient field waits, so
   // the canvas keeps its closing message instead of being painted over.
-  holdAmbient(1400);
+  holdIdleField(1400);
   setPhase("idle");
 }
 
@@ -1399,21 +1725,34 @@ function drawCSF() {
 
 el("start").addEventListener("click", () => { if (!sweep.running) runSweep(); });
 el("abort").addEventListener("click", abortSweep);
-// Adjusting the geometry controls suspends the decorative field and draws the
-// actual stimulus at the chosen magnification, so the controls give the
-// feedback a presenter is setting them by. The lattice resumes once the
-// controls have been quiet for a moment.
+el("fieldStart").addEventListener("click", () => { if (!sweep.running) runSweep(); });
+el("respStop").addEventListener("click", abortSweep);
+// The response buttons answer through the same resolver the keys do, so there
+// is one response path and not two that can disagree.
+el("resp1").addEventListener("click", () => { if (keyResolver) keyResolver("f"); });
+el("resp2").addEventListener("click", () => { if (keyResolver) keyResolver("j"); });
+
+// The rail is open beside the field on wide screens and collapsed below them,
+// where it would otherwise push the task off the bottom of the page.
+const railDrawer = el("railDrawer");
+function syncRailDrawer() { railDrawer.open = !FOCUS_MQ.matches; }
+FOCUS_MQ.addEventListener("change", syncRailDrawer);
+syncRailDrawer();
+// Adjusting the geometry controls suspends the demo and draws a still frame of
+// the stimulus at the chosen magnification, so the controls give the feedback a
+// presenter is setting them by. The demo resumes once the controls have been
+// quiet for a moment.
 const GEOMETRY_PREVIEW_HOLD_MS = 1800;
 let geometryPreviewTimer = 0;
 
 function previewGeometry() {
   const geo = updateGeometryReadout();
-  stopAmbient();
+  stopIdleField();
   drawStaticIdle(geo);
   clearTimeout(geometryPreviewTimer);
   geometryPreviewTimer = setTimeout(() => {
     geometryPreviewTimer = 0;
-    if (document.body.dataset.phase === "idle") startAmbient();
+    if (document.body.dataset.phase === "idle") startIdleField();
   }, GEOMETRY_PREVIEW_HOLD_MS);
 }
 
@@ -1980,6 +2319,7 @@ async function runRsvp() {
   rsvp.running = true;
   el("rsvpStart").disabled = true; el("rsvpStop").disabled = false;
   el("qBox").classList.add("hidden"); el("resultBox").classList.add("hidden");
+  enterFocus(el("rsvpField"));
 
   // Countdown so the observer is fixating when the first word lands, and so
   // the surrounding page has time to settle into its measurement state.
@@ -1999,6 +2339,7 @@ async function runRsvp() {
   // Comprehension questions, scored and shown as prominently as speed.
   let correct = 0;
   el("qBox").classList.remove("hidden");
+  document.body.dataset.asking = "1";
   for (let i = 0; i < passage.questions.length; i++) {
     const q = passage.questions[i];
     el("qCount").textContent = `Question ${i + 1} of ${passage.questions.length}: true or false?`;
@@ -2008,6 +2349,7 @@ async function runRsvp() {
     if (ans === q.a) correct++;
   }
   el("qBox").classList.add("hidden");
+  document.body.dataset.asking = "0";
 
   const acc = correct / passage.questions.length;
   el("resWpm").textContent = String(wpm);
@@ -2021,10 +2363,13 @@ async function runRsvp() {
   el("runsBody").appendChild(tr);
   el("rsvpWord").textContent = "Done";
   stopRsvp(false);
+  el("resultBox").scrollIntoView({ block: "center" });
 }
 
 function stopRsvp(aborted = true) {
   rsvp.running = false;
+  document.body.dataset.asking = "0";
+  exitFocus();
   setPhase("idle");
   if (aborted) { rsvp.runId++; if (keyResolver) keyResolver(null); el("rsvpWord").textContent = "Stopped"; el("qBox").classList.add("hidden"); }
   el("rsvpStart").disabled = false; el("rsvpStop").disabled = true;
@@ -2032,6 +2377,8 @@ function stopRsvp(aborted = true) {
 
 el("rsvpStart").addEventListener("click", () => { if (!rsvp.running) runRsvp(); });
 el("rsvpStop").addEventListener("click", () => stopRsvp(true));
+el("rsvpFieldStart").addEventListener("click", () => { if (!rsvp.running) runRsvp(); });
+el("rsvpFocusStop").addEventListener("click", () => stopRsvp(true));
 el("qTrue").addEventListener("click", () => { if (keyResolver) keyResolver("f"); });
 el("qFalse").addEventListener("click", () => { if (keyResolver) keyResolver("j"); });
 
@@ -2061,9 +2408,9 @@ el("tabRsvp").addEventListener("click", () => showMode("rsvp"));
 // 720 px backing store, which changes the angular frequency the observer
 // receives. Re-read it on every layout change rather than at load only.
 if (window.ResizeObserver) {
-  new ResizeObserver(() => { updateGeometryReadout(); fitCSF(); }).observe(document.body);
+  new ResizeObserver(() => { syncFocusReserve(); refitIdleField(); updateGeometryReadout(); fitCSF(); }).observe(document.body);
 } else {
-  window.addEventListener("resize", () => { updateGeometryReadout(); fitCSF(); });
+  window.addEventListener("resize", () => { syncFocusReserve(); refitIdleField(); updateGeometryReadout(); fitCSF(); });
 }
 
 updateLive();
