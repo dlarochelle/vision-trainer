@@ -28,7 +28,11 @@
     --line-soft: #1a1f2c;
     --ink:       #e6e9f2;
     --dim:       #8b93a8;
-    --dimmer:    #5d6577;
+    /* Carries the 10-11px uppercase labels and the CSF axis ticks, so it has
+       to clear 4.5:1 against every surface it sits on, not just the darkest.
+       At #5d6577 it reached only 2.95:1 on --panel-2. This value holds
+       >=4.6:1 everywhere while staying a visible step below --dim. */
+    --dimmer:    #7d849a;
     --accent:    #6ea8ff;
     --accent-lo: #2f4f80;
     --warn:      #ffb454;
@@ -1021,25 +1025,35 @@ const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 function isGaborMode() { return !el("modeGabor").classList.contains("hidden"); }
 
-// A pending return to idle, so a sweep that just finished cannot restore the
-// page's decoration in the middle of whatever the observer started next.
-let idleTimer = 0;
-function scheduleIdle(ms) {
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { idleTimer = 0; setPhase("idle"); }, ms);
+// The ambient field can be held back without holding back the phase. After a
+// sweep the quarantine lifts at once, so the freshly plotted chart is readable
+// at full strength, while the canvas keeps its closing message a moment longer.
+// Starting anything else cancels the hold, so it cannot fire into a later run.
+let ambientHoldTimer = 0;
+function holdAmbient(ms) {
+  clearTimeout(ambientHoldTimer);
+  ambientHoldTimer = 0;
+  stopAmbient();                       // nothing may paint over the held message
+  ambientHoldTimer = setTimeout(() => {
+    ambientHoldTimer = 0;
+    if (document.body.dataset.phase === "idle") startAmbient();
+    updateFieldCaption();
+  }, ms);
+  updateFieldCaption();
 }
+function clearAmbientHold() { clearTimeout(ambientHoldTimer); ambientHoldTimer = 0; }
 
 function setPhase(phase) {
-  clearTimeout(idleTimer); idleTimer = 0;
   document.body.dataset.phase = phase;
-  if (phase === "idle") startAmbient(); else stopAmbient();
+  if (phase === "idle") startAmbient();
+  else { clearAmbientHold(); stopAmbient(); }
   updateFieldCaption();
 }
 
 function updateFieldCaption() {
   const cap = el("fieldCaption");
   if (!cap) return;
-  if (document.body.dataset.phase !== "idle") { cap.textContent = ""; return; }
+  if (document.body.dataset.phase !== "idle" || ambientHoldTimer) { cap.textContent = ""; return; }
   // The cinematic idle field is decoration, not the task. Say so, rather than
   // letting a viewer take an ornamental lattice for the measured stimulus.
   // The static fallback draws the real stimulus; the animated field does not.
@@ -1090,11 +1104,13 @@ function ambientFrame(ts) {
 
 // The mode check comes first and stops a loop that is already running:
 // entering RSVP mode must not leave this animating against a hidden canvas.
+// Every exit refreshes the caption, so it always describes what is actually
+// on the canvas: the lattice, the real stimulus, or nothing during a hold.
 function startAmbient() {
   if (!isGaborMode()) { stopAmbient(); return; }
+  if (ambientHoldTimer) { updateFieldCaption(); return; }
   if (REDUCED_MOTION.matches || document.hidden) { stopAmbient(); drawStaticIdle(); return; }
-  if (ambientRaf) return;
-  ambientRaf = requestAnimationFrame(ambientFrame);
+  if (!ambientRaf) ambientRaf = requestAnimationFrame(ambientFrame);
   updateFieldCaption();
 }
 function stopAmbient() {
@@ -1221,10 +1237,11 @@ function finishSweep(msg) {
   el("dist").disabled = false; el("scale").disabled = false;
   drawBlank(msg);
   updateLive();
-  // Hold the finished message briefly before the idle field resumes, so the
-  // result is readable rather than immediately painted over. Any later phase
-  // change cancels this, so it cannot fire into a run that started meanwhile.
-  scheduleIdle(1400);
+  // The sweep is over, so the quarantine lifts immediately and the finished
+  // CSF figure is readable at full strength. Only the ambient field waits, so
+  // the canvas keeps its closing message instead of being painted over.
+  holdAmbient(1400);
+  setPhase("idle");
 }
 
 function abortSweep() {
@@ -1264,7 +1281,7 @@ function drawCSF() {
   const c = csfCtx, W = csfLogical.w, H = csfLogical.h;
   const L = 56, R = 18, T = 18, B = 44;
   const ink = cssVar("--ink", "#e6e9f2"), dim = cssVar("--dim", "#8b93a8");
-  const dimmer = cssVar("--dimmer", "#5d6577"), line = cssVar("--line-soft", "#1a1f2c");
+  const dimmer = cssVar("--dimmer", "#7d849a"), line = cssVar("--line-soft", "#1a1f2c");
   const accent = cssVar("--accent", "#6ea8ff"), warn = cssVar("--warn", "#ffb454");
   const mono = '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
