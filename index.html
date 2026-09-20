@@ -1047,7 +1047,14 @@ function refitIdleField() {
   // leaving focus mode changes the layout, so the hold used to lose that race
   // every time. Defer the refit to the moment the hold expires instead.
   if (idleHoldTimer) return;
-  fitField();
+  const resized = fitField();
+  // Resizing clears the backing store, and drawIdle declines to repaint while
+  // the demo owns the canvas — which left the field blank until the demo's
+  // next frame, up to the length of an answer hold. The demo also captured its
+  // geometry at the top of the trial, so the rest of that trial would have
+  // been drawn at the old size. Restarting it fixes both: the loop's first act
+  // is to paint, and the new trial reads the new geometry.
+  if (resized && demoRunning) { stopIdleField(); startIdleField(); return; }
   if (document.body.dataset.phase === "idle") drawIdle();
 }
 
@@ -1072,7 +1079,7 @@ function syncFocusReserve() {
 }
 
 function fitField(force) {
-  if (sweep.running && !force) return;
+  if (sweep.running && !force) return false;
   const frame = canvas.parentElement;
   const cs = getComputedStyle(frame);
   const chrome = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
@@ -1083,15 +1090,16 @@ function fitField(force) {
   if (document.body.classList.contains("focus")) {
     avail = Math.min(avail, window.innerHeight - syncFocusReserve() - FOCUS_CONTROLS_PX);
   }
-  if (!(avail > 0)) return;   // the stage is hidden; nothing to fit
+  if (!(avail > 0)) return false;   // the stage is hidden; nothing to fit
   const size = Math.max(FIELD_MIN_PX, Math.min(FIELD_MAX_PX, Math.round(avail)));
   // The rendered width is pinned to the backing store, so the browser is never
   // left to pick a display size of its own and quietly downscale. Height stays
   // auto: the store is square, and an inline height would fight max-width and
   // distort the aspect on a viewport narrower than the floor.
   canvas.style.width = size + "px";
-  if (canvas.width === size) return;
+  if (canvas.width === size) return false;
   canvas.width = size; canvas.height = size;
+  return true;                 // the backing store was reallocated, so it is blank
 }
 
 function drawFrame(geo, { showTarget, targetContrast, phaseDeg, cue, cueColor }) {
@@ -1445,12 +1453,10 @@ async function presentPair(geo, o) {
 // layout never shifts under a thumb, but they only accept a press here, after
 // the second flash, so an early tap cannot be swallowed by the interval.
 async function waitInterval() {
-  document.body.dataset.respond = "1";
   el("resp1").disabled = false; el("resp2").disabled = false;
   try {
     return await waitKey(INTERVAL_KEYS);
   } finally {
-    document.body.dataset.respond = "0";
     el("resp1").disabled = true; el("resp2").disabled = true;
   }
 }
@@ -1594,7 +1600,6 @@ async function runSweep() {
 function finishSweep(msg) {
   sweep.running = false; sweep.block = null; sweep.stair = null;
   exitFocus();
-  document.body.dataset.respond = "0";
   el("resp1").disabled = true; el("resp2").disabled = true;
   el("start").disabled = false; el("abort").disabled = true;
   el("dist").disabled = false; el("scale").disabled = false;
