@@ -55,6 +55,14 @@ Parameters, all named constants at the top of the script:
   The UI states that this measures comprehension under RSVP and does
   not measure, and is not known to improve, natural reading (Rayner
   et al. 2016).
+- Live staircase state — target contrast now, reversal count, last
+  response — is not shown to the observer. Naming the current target
+  contrast during a threshold measurement tells the observer about the
+  stimulus they are being asked to detect, nearest threshold, which is
+  where the staircase is converging. `?debug=1` on the URL shows it;
+  an ordinary run shows the block and the trial count only. The
+  assumptions (viewing distance, px/degree, the deviation notes) stay
+  visible at setup and in the results either way.
 
 The score is a threshold measurement, not a progress meter. Published
 protocols run 900-1,000 trials per session over 30-40 sessions before
