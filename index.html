@@ -587,6 +587,12 @@
     .masthead { padding-block: 12px 10px; gap: 12px; }
     h1 { font-size: 21px; }
     .tagline { font-size: 12.5px; margin-top: 2px; }
+    /* The 260px idle field is reduced on a narrow screen, so a landscape phone
+       -- wide, and the shortest viewport there is -- was the one case keeping
+       it: 260px of field in a 257px strip between the masthead and the footer,
+       which no amount of scrolling can show at once. The run itself is not
+       affected; focus mode gives the field `min-height: min(46vh, 320px)`. */
+    .rsvp-field { height: 200px; }
   }
 
   /* ---------------------------------------------------------- reduced motion */
@@ -2485,7 +2491,22 @@ function revealField(field) {
   field.scrollIntoView({ block: "center", behavior: REDUCED_MOTION.matches ? "auto" : "smooth" });
 }
 
+// The mode the page is showing. Tapping the tab that is already selected is not
+// a request for anything, and it used to fall through this whole function.
+// Two things came of that. The stop below is written for the mode being left,
+// so a tap on the active tab during an RSVP run reset the phase to idle
+// without stopping the run: the quarantine came off in the middle of a
+// measurement, with the surround back at idle luminance while the observer was
+// still reading. And on a viewport too short to hold the whole field, the
+// reveal fired every time and pulled the reader back from whatever they had
+// scrolled down to. Runs are stopped by Stop, Abort or Escape, which are
+// present in both modes and reachable inside focus mode; the tabs are for
+// moving between modes.
+let currentMode = "gabor";
+
 function showMode(which) {
+  if (which === currentMode) return;
+  currentMode = which;
   const gabor = which === "gabor";
   if (!gabor) abortSweep(); else if (rsvp.running) stopRsvp(true);
   el("modeGabor").classList.toggle("hidden", !gabor);
