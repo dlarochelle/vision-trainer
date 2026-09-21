@@ -2493,7 +2493,12 @@ function showMode(which) {
   el("tabGabor").setAttribute("aria-selected", gabor);
   el("tabRsvp").setAttribute("aria-selected", !gabor);
   setPhase("idle");
-  if (gabor) fitCSF();
+  // Refit before measuring. fitField bails out while the mode is hidden -- the
+  // host's clientWidth is 0 -- so a viewport that changed while the reader was
+  // in the other mode leaves the frame at its old size, and the body
+  // ResizeObserver only catches up after this turn. Measuring first would
+  // centre a 358px frame that then grows to 638px under the scroll position.
+  if (gabor) { refitIdleField(); fitCSF(); }
   revealField(el(gabor ? "fieldFrame" : "rsvpField"));
 }
 el("tabGabor").addEventListener("click", () => showMode("gabor"));
